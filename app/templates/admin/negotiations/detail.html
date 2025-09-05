@@ -1,0 +1,310 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Negotiation #{{ negotiation.id }} - Admin Panel{% endblock %}
+
+{% block page_title %}Negotiation #{{ negotiation.id }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Actions -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Negotiation #{{ negotiation.id }}</h1>
+            <p class="text-gray-600">Started on {{ negotiation.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.negotiations') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Negotiations
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Negotiation Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Negotiation Status Card -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Negotiation Status</h3>
+                    <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full
+                        {% if negotiation.status == 'accepted' %}bg-green-100 text-green-800
+                        {% elif negotiation.status == 'ongoing' %}bg-yellow-100 text-yellow-800
+                        {% elif negotiation.status == 'rejected' %}bg-red-100 text-red-800
+                        {% elif negotiation.status == 'cancelled' %}bg-gray-100 text-gray-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ negotiation.status.title() }}
+                    </span>
+                </div>
+                
+                <!-- Status Update Form -->
+                <form method="POST" action="{{ url_for('admin.update_negotiation_status', negotiation_id=negotiation.id) }}" class="space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <select name="status" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="ongoing" {% if negotiation.status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                            <option value="accepted" {% if negotiation.status == 'accepted' %}selected{% endif %}>Accepted</option>
+                            <option value="rejected" {% if negotiation.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            <option value="cancelled" {% if negotiation.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            Update Status
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Name</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.user.name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Email</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.user.email }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">User ID</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.user.id }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Member Since</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.user.created_at.strftime('%B %d, %Y') }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('admin.view_user', user_id=negotiation.user.id) }}" class="text-blue-600 hover:text-blue-900 text-sm">
+                        View Customer Profile →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Vehicle Information -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Vehicle Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Make & Model</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.vehicle.make }} {{ negotiation.vehicle.model }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Year</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.vehicle.year }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Original Price</label>
+                        <p class="text-sm text-gray-900">${{ "{:,.2f}".format(negotiation.vehicle.price) }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-500">Vehicle ID</label>
+                        <p class="text-sm text-gray-900">{{ negotiation.vehicle.id }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="{{ url_for('admin.view_vehicle', vehicle_id=negotiation.vehicle.id) }}" class="text-blue-600 hover:text-blue-900 text-sm">
+                        View Vehicle Details →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Offer History -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Offer History</h3>
+                {% if offers %}
+                <div class="space-y-4">
+                    {% for offer in offers %}
+                    <div class="border-l-4 {% if offer.offer_by.value == 'BUYER' %}border-blue-500{% else %}border-green-500{% endif %} pl-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    {% if offer.offer_by.value == 'BUYER' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-green-100 text-green-800{% endif %}">
+                                    {% if offer.offer_by.value == 'BUYER' %}Customer{% else %}Admin{% endif %}
+                                </span>
+                                <span class="text-sm font-medium text-gray-900">${{ "{:,.2f}".format(offer.offer_price) }}</span>
+                            </div>
+                            <span class="text-xs text-gray-500">{{ offer.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+                        </div>
+                        {% if offer.reason %}
+                        <p class="text-sm text-gray-700 mt-2">{{ offer.reason }}</p>
+                        {% endif %}
+                        
+                        <!-- Offer Actions -->
+                        {% if negotiation.status == 'ongoing' and offer.offer_by.value == 'BUYER' %}
+                        <div class="mt-3 flex space-x-2">
+                            <form method="POST" action="{{ url_for('admin.accept_negotiation_offer', negotiation_id=negotiation.id, offer_id=offer.id) }}" class="inline">
+                                <button type="submit" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors duration-200">
+                                    Accept
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.reject_negotiation_offer', negotiation_id=negotiation.id, offer_id=offer.id) }}" class="inline">
+                                <button type="submit" class="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors duration-200">
+                                    Reject
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                    <p class="mt-2">No offers yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Negotiation Summary -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Negotiation Summary</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Negotiation ID</span>
+                        <span class="text-sm font-medium text-gray-900">#{{ negotiation.id }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Started</span>
+                        <span class="text-sm font-medium text-gray-900">{{ negotiation.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Last Updated</span>
+                        <span class="text-sm font-medium text-gray-900">{{ negotiation.updated_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Original Price</span>
+                        <span class="text-sm font-medium text-gray-900">${{ "{:,.2f}".format(negotiation.vehicle.price) }}</span>
+                    </div>
+                    {% if negotiation.final_price %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Final Price</span>
+                        <span class="text-sm font-medium text-gray-900">${{ "{:,.2f}".format(negotiation.final_price) }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Savings</span>
+                        <span class="text-sm font-medium text-green-600">${{ "{:,.2f}".format(negotiation.vehicle.price - negotiation.final_price) }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Total Offers</span>
+                        <span class="text-sm font-medium text-gray-900">{{ total_offers }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Make Counter-Offer -->
+            {% if negotiation.status == 'ongoing' %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Make Counter-Offer</h3>
+                <form method="POST" action="{{ url_for('admin.make_negotiation_offer', negotiation_id=negotiation.id) }}" class="space-y-4">
+                    <div>
+                        <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">Offer Amount</label>
+                        <input type="number" name="amount" id="amount" step="0.01" min="0" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Enter offer amount">
+                    </div>
+                    <div>
+                        <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message (Optional)</label>
+                        <textarea name="message" id="message" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  placeholder="Add a message to your offer"></textarea>
+                    </div>
+                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        Make Counter-Offer
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Negotiation Timeline -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Timeline</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-900">Negotiation Started</p>
+                            <p class="text-xs text-gray-500">{{ negotiation.created_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if offers %}
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-900">Offers Exchanged</p>
+                            <p class="text-xs text-gray-500">{{ total_offers }} offers made</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if negotiation.status == 'accepted' %}
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-900">Negotiation Accepted</p>
+                            <p class="text-xs text-gray-500">{{ negotiation.updated_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                    {% elif negotiation.status == 'rejected' %}
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-900">Negotiation Rejected</p>
+                            <p class="text-xs text-gray-500">{{ negotiation.updated_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                    {% elif negotiation.status == 'cancelled' %}
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-900">Negotiation Cancelled</p>
+                            <p class="text-xs text-gray-500">{{ negotiation.updated_at.strftime('%b %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

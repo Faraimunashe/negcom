@@ -35,12 +35,14 @@ def create_app():
     from .vehicles import vehicles_bp
     from .negotiations import negotiations_bp
     from .orders import orders_bp
+    from .admin import admin_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(vehicles_bp)
     app.register_blueprint(negotiations_bp)
     app.register_blueprint(orders_bp)
+    app.register_blueprint(admin_bp)
 
     from app.models import User
 

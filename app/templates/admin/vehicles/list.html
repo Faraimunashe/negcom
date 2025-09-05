@@ -1,0 +1,419 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Vehicle Management - Admin Panel{% endblock %}
+
+{% block page_title %}Vehicle Management{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Actions -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Vehicle Management</h1>
+            <p class="text-gray-600">Manage your vehicle inventory</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.create_vehicle') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Vehicle
+            </a>
+            <a href="{{ url_for('admin.export_all_vehicles') }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export All
+            </a>
+            <a href="{{ url_for('admin.import_vehicles') }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                </svg>
+                Import
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <!-- Search -->
+            <div class="lg:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <input type="text" name="search" value="{{ search_query }}" 
+                       placeholder="Make, model, color..." 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <!-- Make Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Make</label>
+                <select name="make" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Makes</option>
+                    {% for make in unique_makes %}
+                        <option value="{{ make.make }}" {% if make_filter == make.make %}selected{% endif %}>{{ make.make }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Year Filter -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                <select name="year" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Years</option>
+                    {% for year in unique_years %}
+                        <option value="{{ year.year }}" {% if year_filter == year.year|string %}selected{% endif %}>{{ year.year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Price Range -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Min Price</label>
+                <input type="number" name="price_min" value="{{ price_min or '' }}" 
+                       placeholder="0" step="0.01"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
+                <input type="number" name="price_max" value="{{ price_max or '' }}" 
+                       placeholder="100000" step="0.01"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <form id="bulkForm" method="POST" action="{{ url_for('admin.bulk_vehicle_actions') }}">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="selectAll" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-700">Select All</span>
+                    </label>
+                    <span id="selectedCount" class="text-sm text-gray-600">0 selected</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <select name="action" id="bulkAction" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" disabled>
+                        <option value="">Choose action...</option>
+                        <option value="export">Export Selected</option>
+                        <option value="delete">Delete Selected</option>
+                    </select>
+                    <button type="submit" id="bulkSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm" disabled>
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="flex justify-between items-center">
+        <p class="text-sm text-gray-600">
+            Showing {{ vehicles.items|length }} of {{ vehicles.total }} vehicles
+        </p>
+        <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-600">Sort by:</span>
+            <select onchange="window.location.href = updateUrlParam('sort', this.value)" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Date Added</option>
+                <option value="make" {% if sort_by == 'make' %}selected{% endif %}>Make</option>
+                <option value="year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                <option value="mileage" {% if sort_by == 'mileage' %}selected{% endif %}>Mileage</option>
+            </select>
+            <button onclick="toggleSortOrder()" class="px-2 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Vehicles Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {% if vehicles.items %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <input type="checkbox" id="selectAllHeader" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mileage</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for vehicle in vehicles.items %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" name="vehicle_ids" value="{{ vehicle.id }}" class="vehicle-checkbox h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-12 w-12">
+                                    {% set primary_image = vehicle.images|selectattr('is_primary', 'equalto', True)|first %}
+                                    {% if primary_image %}
+                                        <img class="h-12 w-12 rounded-lg object-cover" src="{{ primary_image.image_url }}" alt="{{ vehicle.make }} {{ vehicle.model }}">
+                                    {% else %}
+                                        <div class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                            </svg>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ vehicle.make }} {{ vehicle.model }}</div>
+                                    <div class="text-sm text-gray-500">{{ vehicle.color }} • {{ vehicle.engine_type|title }} • {{ vehicle.transmission|title }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ vehicle.year }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ "{:,}".format(vehicle.mileage) }} km</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${{ "{:,.2f}".format(vehicle.price) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                Available
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ vehicle.created_at.strftime('%b %d, %Y') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end space-x-2">
+                                <a href="{{ url_for('admin.view_vehicle', vehicle_id=vehicle.id) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                                <a href="{{ url_for('admin.edit_vehicle', vehicle_id=vehicle.id) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <button onclick="confirmDelete({{ vehicle.id }}, '{{ vehicle.make }} {{ vehicle.model }}')" class="text-red-600 hover:text-red-900">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No vehicles found</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating a new vehicle.</p>
+            <div class="mt-6">
+                <a href="{{ url_for('admin.create_vehicle') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Add Vehicle
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if vehicles.pages > 1 %}
+    <div class="flex items-center justify-between">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if vehicles.has_prev %}
+                <a href="{{ url_for('admin.vehicles', page=vehicles.prev_num, **request.args) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Previous
+                </a>
+            {% endif %}
+            {% if vehicles.has_next %}
+                <a href="{{ url_for('admin.vehicles', page=vehicles.next_num, **request.args) }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Next
+                </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ vehicles.page * vehicles.per_page - vehicles.per_page + 1 }}</span>
+                    to <span class="font-medium">{{ vehicles.page * vehicles.per_page if vehicles.page * vehicles.per_page < vehicles.total else vehicles.total }}</span>
+                    of <span class="font-medium">{{ vehicles.total }}</span> results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if vehicles.has_prev %}
+                        <a href="{{ url_for('admin.vehicles', page=vehicles.prev_num, **request.args) }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                    
+                    {% for page_num in vehicles.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != vehicles.page %}
+                                <a href="{{ url_for('admin.vehicles', page=page_num, **request.args) }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ page_num }}
+                                </a>
+                            {% else %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ page_num }}
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                ...
+                            </span>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if vehicles.has_next %}
+                        <a href="{{ url_for('admin.vehicles', page=vehicles.next_num, **request.args) }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Delete Vehicle</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Are you sure you want to delete <span id="vehicleName" class="font-medium"></span>? This action cannot be undone.
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <form id="deleteForm" method="POST" class="inline">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 mr-2">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateUrlParam(param, value) {
+        const url = new URL(window.location);
+        url.searchParams.set(param, value);
+        return url.toString();
+    }
+    
+    function toggleSortOrder() {
+        const currentOrder = '{{ sort_order }}';
+        const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+        window.location.href = updateUrlParam('order', newOrder);
+    }
+    
+    function confirmDelete(vehicleId, vehicleName) {
+        document.getElementById('vehicleName').textContent = vehicleName;
+        document.getElementById('deleteForm').action = '{{ url_for("admin.delete_vehicle", vehicle_id=0) }}'.replace('0', vehicleId);
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+    
+    // Bulk operations functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const selectAllHeaderCheckbox = document.getElementById('selectAllHeader');
+        const vehicleCheckboxes = document.querySelectorAll('.vehicle-checkbox');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const bulkActionSelect = document.getElementById('bulkAction');
+        const bulkSubmitButton = document.getElementById('bulkSubmit');
+        const bulkForm = document.getElementById('bulkForm');
+        
+        function updateSelectedCount() {
+            const selectedCheckboxes = document.querySelectorAll('.vehicle-checkbox:checked');
+            const count = selectedCheckboxes.length;
+            selectedCountSpan.textContent = `${count} selected`;
+            
+            // Enable/disable bulk action controls
+            const hasSelection = count > 0;
+            bulkActionSelect.disabled = !hasSelection;
+            bulkSubmitButton.disabled = !hasSelection || !bulkActionSelect.value;
+            
+            // Update select all checkboxes
+            selectAllCheckbox.checked = count === vehicleCheckboxes.length && count > 0;
+            selectAllHeaderCheckbox.checked = count === vehicleCheckboxes.length && count > 0;
+        }
+        
+        function toggleAllCheckboxes(checked) {
+            vehicleCheckboxes.forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+            updateSelectedCount();
+        }
+        
+        // Event listeners
+        selectAllCheckbox.addEventListener('change', function() {
+            toggleAllCheckboxes(this.checked);
+        });
+        
+        selectAllHeaderCheckbox.addEventListener('change', function() {
+            toggleAllCheckboxes(this.checked);
+        });
+        
+        vehicleCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+        
+        bulkActionSelect.addEventListener('change', function() {
+            bulkSubmitButton.disabled = !this.value || document.querySelectorAll('.vehicle-checkbox:checked').length === 0;
+        });
+        
+        bulkForm.addEventListener('submit', function(e) {
+            const selectedCheckboxes = document.querySelectorAll('.vehicle-checkbox:checked');
+            if (selectedCheckboxes.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one vehicle.');
+                return;
+            }
+            
+            const action = bulkActionSelect.value;
+            if (action === 'delete') {
+                if (!confirm(`Are you sure you want to delete ${selectedCheckboxes.length} vehicle(s)? This action cannot be undone.`)) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

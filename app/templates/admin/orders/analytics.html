@@ -1,0 +1,341 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Order Analytics - Admin Panel{% endblock %}
+
+{% block page_title %}Order Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Order Analytics</h1>
+            <p class="text-gray-600">Revenue reports and sales insights</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.orders') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Orders
+            </a>
+        </div>
+    </div>
+
+    <!-- Revenue Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Revenue</p>
+                    <p class="text-2xl font-semibold text-gray-900">
+                        ${{ "{:,.2f}".format(monthly_revenue|sum(attribute='revenue') or 0) }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total Orders</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ monthly_revenue|sum(attribute='orders') or 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Average Order Value</p>
+                    <p class="text-2xl font-semibold text-gray-900">
+                        {% set total_revenue = monthly_revenue|sum(attribute='revenue') or 0 %}
+                        {% set total_orders = monthly_revenue|sum(attribute='orders') or 0 %}
+                        {% if total_orders > 0 %}
+                            ${{ "{:,.2f}".format(total_revenue / total_orders) }}
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Monthly Revenue Chart -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Revenue</h3>
+            <canvas id="monthlyRevenueChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Daily Sales Chart -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Sales (Last 30 Days)</h3>
+            <canvas id="dailySalesChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Order Status Distribution -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Status Distribution</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {% for status, count in status_distribution %}
+            <div class="text-center">
+                <div class="text-2xl font-bold text-gray-900">{{ count }}</div>
+                <div class="text-sm text-gray-500">{{ status.title() }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Top Vehicles and Customers -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Selling Vehicles -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Selling Vehicles</h3>
+            {% if top_vehicles %}
+            <div class="space-y-4">
+                {% for vehicle in top_vehicles[:5] %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ vehicle.make }} {{ vehicle.model }}</p>
+                        <p class="text-xs text-gray-500">{{ vehicle.sales }} sales</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${{ "{:,.2f}".format(vehicle.revenue) }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No sales data available</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Top Customers -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Customers</h3>
+            {% if top_customers %}
+            <div class="space-y-4">
+                {% for customer in top_customers[:5] %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ customer.name }}</p>
+                        <p class="text-xs text-gray-500">{{ customer.orders }} orders</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${{ "{:,.2f}".format(customer.total_spent) }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No customer data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Monthly Revenue Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Revenue Breakdown</h3>
+            {% if monthly_revenue %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for month_data in monthly_revenue %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ month_data.month }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ month_data.orders }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ${{ "{:,.2f}".format(month_data.revenue) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No monthly data available</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Top Vehicles Table -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Vehicle Performance</h3>
+            {% if top_vehicles %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for vehicle in top_vehicles %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ vehicle.make }} {{ vehicle.model }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ vehicle.sales }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ${{ "{:,.2f}".format(vehicle.revenue) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No vehicle data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly Revenue Chart
+    const monthlyRevenueCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
+    const monthlyRevenueData = {
+        labels: [
+            {% for month in monthly_revenue %}
+                '{{ month.month }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Revenue ($)',
+            data: [
+                {% for month in monthly_revenue %}
+                    {{ month.revenue or 0 }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+    
+    new Chart(monthlyRevenueCtx, {
+        type: 'line',
+        data: monthlyRevenueData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Revenue: $' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Daily Sales Chart
+    const dailySalesCtx = document.getElementById('dailySalesChart').getContext('2d');
+    const dailySalesData = {
+        labels: [
+            {% for day in daily_sales %}
+                '{{ day.date.strftime("%m/%d") }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Orders',
+            data: [
+                {% for day in daily_sales %}
+                    {{ day.orders or 0 }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(16, 185, 129)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    };
+    
+    new Chart(dailySalesCtx, {
+        type: 'line',
+        data: dailySalesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Orders: ' + context.parsed.y;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}{{ vehicle.make }} {{ vehicle.model }} - Admin Panel{% endblock %}
+
+{% block page_title %}{{ vehicle.make }} {{ vehicle.model }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Actions -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ vehicle.make }} {{ vehicle.model }}</h1>
+            <p class="text-gray-600">Vehicle ID: {{ vehicle.id }} • Added {{ vehicle.created_at.strftime('%B %d, %Y') }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.manage_vehicle_images', vehicle_id=vehicle.id) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Manage Images
+            </a>
+            <a href="{{ url_for('admin.manage_vehicle_categories', vehicle_id=vehicle.id) }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                </svg>
+                Manage Categories
+            </a>
+            <a href="{{ url_for('admin.edit_vehicle', vehicle_id=vehicle.id) }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edit Vehicle
+            </a>
+            <button onclick="confirmDelete({{ vehicle.id }}, '{{ vehicle.make }} {{ vehicle.model }}')" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete Vehicle
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Vehicle Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Vehicle Images -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Vehicle Images</h3>
+                {% if images %}
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {% for image in images %}
+                        <div class="relative group">
+                            <img src="{{ image.image_url }}" alt="{{ vehicle.make }} {{ vehicle.model }}" class="w-full h-32 object-cover rounded-lg">
+                            {% if image.is_primary %}
+                                <div class="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">Primary</div>
+                            {% endif %}
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                <button class="opacity-0 group-hover:opacity-100 bg-white text-gray-800 px-3 py-1 rounded text-sm transition-opacity duration-200">
+                                    View
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <p class="mt-2">No images uploaded</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Vehicle Specifications -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Specifications</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Make</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.make }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Model</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.model }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Year</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.year }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Mileage</label>
+                            <p class="text-lg text-gray-900">{{ "{:,}".format(vehicle.mileage) }} km</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Engine Type</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.engine_type|title }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Transmission</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.transmission|title }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Body Type</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.body_type }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-500">Color</label>
+                            <p class="text-lg text-gray-900">{{ vehicle.color }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            {% if categories %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for category in categories %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        {{ category.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Pricing -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Pricing</h3>
+                <div class="text-center">
+                    <p class="text-3xl font-bold text-gray-900">${{ "{:,.2f}".format(vehicle.price) }}</p>
+                    <p class="text-sm text-gray-500 mt-1">Current Price</p>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Status</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Availability</span>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Available
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Created</span>
+                        <span class="text-sm text-gray-900">{{ vehicle.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Last Updated</span>
+                        <span class="text-sm text-gray-900">{{ vehicle.updated_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            {% if orders %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Orders</h3>
+                    <span class="text-sm text-gray-500">{{ orders|length }} total</span>
+                </div>
+                <div class="space-y-3">
+                    {% for order in orders[:5] %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Order #{{ order.id }}</p>
+                            <p class="text-xs text-gray-500">{{ order.created_at.strftime('%b %d') }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-900">${{ "{:,.2f}".format(order.price) }}</p>
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                {% if order.status == 'paid' %}bg-green-100 text-green-800
+                                {% elif order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif order.status == 'failed' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ order.status.title() }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Negotiations -->
+            {% if negotiations %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Negotiations</h3>
+                    <span class="text-sm text-gray-500">{{ negotiations|length }} total</span>
+                </div>
+                <div class="space-y-3">
+                    {% for negotiation in negotiations[:5] %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Negotiation #{{ negotiation.id }}</p>
+                            <p class="text-xs text-gray-500">{{ negotiation.created_at.strftime('%b %d') }}</p>
+                        </div>
+                        <div class="text-right">
+                            {% if negotiation.final_price %}
+                                <p class="text-sm font-semibold text-gray-900">${{ "{:,.2f}".format(negotiation.final_price) }}</p>
+                            {% else %}
+                                <p class="text-sm text-gray-500">No final price</p>
+                            {% endif %}
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                {% if negotiation.status == 'accepted' %}bg-green-100 text-green-800
+                                {% elif negotiation.status == 'ongoing' %}bg-blue-100 text-blue-800
+                                {% elif negotiation.status == 'rejected' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ negotiation.status.title() }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Delete Vehicle</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Are you sure you want to delete <span id="vehicleName" class="font-medium"></span>? This action cannot be undone.
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <form id="deleteForm" method="POST" class="inline">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300 mr-2">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(vehicleId, vehicleName) {
+        document.getElementById('vehicleName').textContent = vehicleName;
+        document.getElementById('deleteForm').action = '{{ url_for("admin.delete_vehicle", vehicle_id=0) }}'.replace('0', vehicleId);
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+</script>
+{% endblock %}

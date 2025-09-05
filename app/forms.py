@@ -176,3 +176,114 @@ class PaymentForm(FlaskForm):
                                          "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
     
     submit = SubmitField('Process Payment', render_kw={"class": "w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-medium"})
+
+# Admin Forms
+class AdminVehicleForm(FlaskForm):
+    make = StringField('Make', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "e.g., Toyota, Honda, BMW",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    model = StringField('Model', validators=[DataRequired(), Length(min=2, max=80)],
+                       render_kw={"placeholder": "e.g., Camry, Civic, 3 Series",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    year = IntegerField('Year', validators=[DataRequired(), NumberRange(min=1900, max=2030)],
+                       render_kw={"placeholder": "e.g., 2020",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    mileage = IntegerField('Mileage (km)', validators=[DataRequired(), NumberRange(min=0)],
+                          render_kw={"placeholder": "e.g., 35000",
+                                    "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    engine_type = SelectField('Engine Type', choices=[
+        ('petrol', 'Petrol'),
+        ('diesel', 'Diesel'),
+        ('hybrid', 'Hybrid'),
+        ('electric', 'Electric'),
+        ('lpg', 'LPG'),
+        ('cng', 'CNG')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    transmission = SelectField('Transmission', choices=[
+        ('manual', 'Manual'),
+        ('automatic', 'Automatic'),
+        ('semi-automatic', 'Semi-Automatic'),
+        ('cvt', 'CVT')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    body_type = SelectField('Body Type', choices=[
+        ('Sedan', 'Sedan'),
+        ('SUV', 'SUV'),
+        ('Hatchback', 'Hatchback'),
+        ('Coupe', 'Coupe'),
+        ('Convertible', 'Convertible'),
+        ('Truck', 'Truck'),
+        ('Van', 'Van'),
+        ('Wagon', 'Wagon')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    color = StringField('Color', validators=[DataRequired(), Length(min=2, max=80)],
+                       render_kw={"placeholder": "e.g., Silver, Black, White",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    price = DecimalField('Price ($)', validators=[DataRequired(), NumberRange(min=0.01)],
+                        render_kw={"placeholder": "e.g., 25000.00", "step": "0.01",
+                                  "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Save Vehicle', render_kw={"class": "w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium"})
+
+class AdminUserForm(FlaskForm):
+    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "Enter full name",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    email = StringField('Email', validators=[DataRequired(), Email()],
+                       render_kw={"placeholder": "Enter email address",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    role = SelectField('Role', choices=[
+        (1, 'Admin'),
+        (2, 'User')
+    ], coerce=int, validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Update User', render_kw={"class": "w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-medium"})
+
+class AdminOrderForm(FlaskForm):
+    status = SelectField('Order Status', choices=[
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Update Order', render_kw={"class": "w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium"})
+
+class AdminNegotiationForm(FlaskForm):
+    status = SelectField('Negotiation Status', choices=[
+        ('ongoing', 'Ongoing'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ('expired', 'Expired')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    final_price = DecimalField('Final Price ($)', validators=[Optional(), NumberRange(min=0.01)],
+                              render_kw={"placeholder": "e.g., 22000.00", "step": "0.01",
+                                        "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Update Negotiation', render_kw={"class": "w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition duration-200 font-medium"})
+
+class AdminDiscountRuleForm(FlaskForm):
+    vehicle_id = SelectField('Vehicle', coerce=int, validators=[DataRequired()],
+                            render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    max_discount_percentage = DecimalField('Max Discount (%)', validators=[DataRequired(), NumberRange(min=0.01, max=99.99)],
+                                          render_kw={"placeholder": "e.g., 15.00", "step": "0.01",
+                                                    "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    min_price_allowed = DecimalField('Min Price Allowed ($)', validators=[DataRequired(), NumberRange(min=0.01)],
+                                    render_kw={"placeholder": "e.g., 18000.00", "step": "0.01",
+                                              "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Save Discount Rule', render_kw={"class": "w-full bg-yellow-600 text-white py-3 px-4 rounded-lg hover:bg-yellow-700 transition duration-200 font-medium"})
+
+class AdminReportForm(FlaskForm):
+    start_date = DateField('Start Date', validators=[DataRequired()],
+                          render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    end_date = DateField('End Date', validators=[DataRequired()],
+                        render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    report_type = SelectField('Report Type', choices=[
+        ('sales', 'Sales Report'),
+        ('users', 'User Report'),
+        ('vehicles', 'Vehicle Report'),
+        ('negotiations', 'Negotiation Report')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Generate Report', render_kw={"class": "w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium"})

@@ -23,6 +23,13 @@ def index():
         page=page, per_page=per_page, error_out=False
     )
     
+    # Get first offer for each negotiation
+    for negotiation in negotiations.items:
+        first_offer = NegotiationOffer.query.filter_by(
+            negotiation_id=negotiation.id
+        ).order_by(asc(NegotiationOffer.created_at)).first()
+        negotiation.first_offer = first_offer
+    
     return render_template('negotiations/index.html', negotiations=negotiations)
 
 @negotiations_bp.route('/create/<int:vehicle_id>', methods=['GET', 'POST'])
@@ -294,6 +301,13 @@ def my_offers():
         desc(Negotiation.updated_at)
     ).paginate(page=page, per_page=per_page, error_out=False)
     
+    # Get first offer for each negotiation
+    for negotiation in negotiations.items:
+        first_offer = NegotiationOffer.query.filter_by(
+            negotiation_id=negotiation.id
+        ).order_by(asc(NegotiationOffer.created_at)).first()
+        negotiation.first_offer = first_offer
+    
     return render_template('negotiations/my_offers.html', negotiations=negotiations)
 
 @negotiations_bp.route('/received-offers')
@@ -308,6 +322,13 @@ def received_offers():
     negotiations = Negotiation.query.order_by(desc(Negotiation.updated_at)).paginate(
         page=page, per_page=per_page, error_out=False
     )
+    
+    # Get first offer for each negotiation
+    for negotiation in negotiations.items:
+        first_offer = NegotiationOffer.query.filter_by(
+            negotiation_id=negotiation.id
+        ).order_by(asc(NegotiationOffer.created_at)).first()
+        negotiation.first_offer = first_offer
     
     return render_template('negotiations/received_offers.html', negotiations=negotiations)
 
@@ -325,6 +346,12 @@ def contact(negotiation_id):
     # Note: Since there's no seller_id, we'll show a generic contact form
     # In a real system, you might want to add proper seller identification
     other_party = None
+    
+    # Get first offer for this negotiation
+    first_offer = NegotiationOffer.query.filter_by(
+        negotiation_id=negotiation.id
+    ).order_by(asc(NegotiationOffer.created_at)).first()
+    negotiation.first_offer = first_offer
     
     form = ContactSellerForm()
     

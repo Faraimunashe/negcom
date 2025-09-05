@@ -79,7 +79,11 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <div>
                                         <p class="text-sm text-gray-600">Initial Offer</p>
-                                        <p class="font-semibold text-gray-900">${{ "%.2f"|format(negotiation.initial_offer) }}</p>
+                                        {% if negotiation.first_offer %}
+                                            <p class="font-semibold text-gray-900">${{ "%.2f"|format(negotiation.first_offer.offer_price) }}</p>
+                                        {% else %}
+                                            <p class="font-semibold text-gray-900">No offers yet</p>
+                                        {% endif %}
                                     </div>
                                     {% if negotiation.final_price %}
                                         <div>
@@ -104,11 +108,11 @@
                                 <div class="flex items-center space-x-4 text-sm text-gray-600">
                                     <div class="flex items-center">
                                         <span class="font-medium">Buyer:</span>
-                                        <span class="ml-1">{{ negotiation.buyer.name }}</span>
+                                        <span class="ml-1">{{ current_user.name }}</span>
                                     </div>
                                     <div class="flex items-center">
                                         <span class="font-medium">Seller:</span>
-                                        <span class="ml-1">{{ negotiation.seller.name }}</span>
+                                        <span class="ml-1">Admin</span>
                                     </div>
                                 </div>
                             </div>

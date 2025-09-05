@@ -1,0 +1,233 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Inventory Reports - Admin Panel{% endblock %}
+
+{% block page_title %}Inventory Reports{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Inventory Reports</h1>
+            <p class="text-gray-600">Detailed inventory analytics and performance metrics</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{{ url_for('admin.inventory') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Inventory
+            </a>
+        </div>
+    </div>
+
+    <!-- Monthly Sales Chart -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Sales Trends</h3>
+        {% if monthly_sales %}
+        <div class="h-64">
+            <canvas id="monthlySalesChart"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center py-8 text-gray-500">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <p class="mt-2">No sales data available</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Performing Vehicles -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Performing Vehicles</h3>
+            {% if top_vehicles %}
+            <div class="space-y-3">
+                {% for vehicle in top_vehicles %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ vehicle.make }} {{ vehicle.model }}</p>
+                        <p class="text-xs text-gray-500">{{ vehicle.sales }} sales</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${{ "{:,.2f}".format(vehicle.revenue) }}</p>
+                        <p class="text-xs text-gray-500">Revenue</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <p class="mt-2">No performance data available</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Inventory Turnover -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Inventory Turnover</h3>
+            {% if turnover_data %}
+            <div class="space-y-3">
+                {% for item in turnover_data %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ item.make }} {{ item.model }}</p>
+                        <p class="text-xs text-gray-500">{{ item.total_orders }} total orders</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">
+                            {% if item.avg_days_to_sell %}
+                                {{ "%.0f"|format(item.avg_days_to_sell) }} days
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                        <p class="text-xs text-gray-500">Avg. time to sell</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="mt-2">No turnover data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Summary Statistics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">
+                    {% if monthly_sales %}
+                        {{ monthly_sales|sum(attribute='orders') }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-500">Total Orders</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">
+                    ${{ "{:,.2f}".format(monthly_sales|sum(attribute='revenue') or 0) }}
+                </div>
+                <div class="text-sm text-gray-500">Total Revenue</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600">
+                    {% if top_vehicles %}
+                        {{ top_vehicles|length }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="text-sm text-gray-500">Active Models</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if monthly_sales %}
+<script>
+    // Monthly Sales Chart
+    const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+    const monthlySalesData = {
+        labels: [
+            {% for sale in monthly_sales %}
+                '{{ sale.month.strftime("%b %Y") }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Orders',
+            data: [
+                {% for sale in monthly_sales %}
+                    {{ sale.orders }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true,
+            yAxisID: 'y'
+        }, {
+            label: 'Revenue ($)',
+            data: [
+                {% for sale in monthly_sales %}
+                    {{ sale.revenue or 0 }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.4,
+            fill: true,
+            yAxisID: 'y1'
+        }]
+    };
+    
+    new Chart(monthlySalesCtx, {
+        type: 'line',
+        data: monthlySalesData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Month'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Orders'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

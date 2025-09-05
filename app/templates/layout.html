@@ -122,6 +122,11 @@
                 <a href="{{ url_for('orders.index') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
                     My Orders
                 </a>
+                {% if current_user.role == 1 %}
+                <a href="{{ url_for('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                    Admin Panel
+                </a>
+                {% endif %}
                         </div>
                         <div class="flex items-center space-x-2">
                             <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">

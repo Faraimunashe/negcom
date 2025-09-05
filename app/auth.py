@@ -68,7 +68,7 @@ def register():
         try:
             # Create new user
             password_hash = sha256_crypt.encrypt(password)
-            new_user = User(email=email, password=password_hash, name=name, role=1)  # role=2 for regular user
+            new_user = User(email=email, password=password_hash, name=name, role=2)  # role=2 for regular user
             db.session.add(new_user)
             db.session.commit()
             

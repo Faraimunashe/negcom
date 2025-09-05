@@ -1,0 +1,350 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}User Analytics{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="md:flex md:items-center md:justify-between">
+        <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                User Analytics
+            </h2>
+            <p class="mt-1 text-sm text-gray-500">
+                Monitor user registration trends, behavior patterns, and engagement metrics
+            </p>
+        </div>
+        <div class="mt-4 flex md:mt-0 md:ml-4">
+            <a href="{{ url_for('admin.export_reports', type='users', format='csv') }}" 
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors duration-200">
+                <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Export CSV
+            </a>
+        </div>
+    </div>
+
+    <!-- Engagement Metrics -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ engagement_metrics.total_users }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Users</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ engagement_metrics.active_users }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Users with Orders</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ engagement_metrics.users_with_orders }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Users with Negotiations</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ engagement_metrics.users_with_negotiations }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Avg Orders/User</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ "{:.1f}".format(engagement_metrics.avg_orders_per_user) }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Trends -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Registration Trends (Last 12 Months)</h3>
+            {% if registration_trends %}
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admins</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Users</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for trend in registration_trends %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ trend.month }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ trend.registrations }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ trend.admins }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ trend.users }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="h-64">
+                    <canvas id="registrationChart"></canvas>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No registration data</h3>
+                <p class="mt-1 text-sm text-gray-500">No user registration trends found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- User Activity Analysis -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">User Activity Analysis</h3>
+            {% if user_activity %}
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity Level</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Users</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Orders</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for activity in user_activity %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ activity.activity_level }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.user_count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ activity.total_orders or 0 }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ "{:,.2f}".format(activity.total_revenue or 0) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="h-64">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No activity data</h3>
+                <p class="mt-1 text-sm text-gray-500">No user activity analysis data found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Top Customers by Spending</h3>
+            {% if top_customers %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orders</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Order Value</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member Since</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for customer in top_customers %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ customer.name }}</div>
+                                <div class="text-sm text-gray-500">{{ customer.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.orders }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ "{:,.2f}".format(customer.total_spent) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ "{:,.2f}".format(customer.avg_order_value) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ customer.created_at.strftime('%b %Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No customer data</h3>
+                <p class="mt-1 text-sm text-gray-500">No top customers found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if registration_trends %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Registration Trends Chart
+    const regCtx = document.getElementById('registrationChart').getContext('2d');
+    const regData = {{ registration_trends | tojson }};
+    
+    const regLabels = regData.map(item => item.month);
+    const regTotal = regData.map(item => parseInt(item.registrations));
+    const regAdmins = regData.map(item => parseInt(item.admins));
+    const regUsers = regData.map(item => parseInt(item.users));
+    
+    new Chart(regCtx, {
+        type: 'line',
+        data: {
+            labels: regLabels,
+            datasets: [{
+                label: 'Total Registrations',
+                data: regTotal,
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Admins',
+                data: regAdmins,
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.1
+            }, {
+                label: 'Users',
+                data: regUsers,
+                borderColor: 'rgb(16, 185, 129)',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+
+{% if user_activity %}
+<script>
+    // User Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    const activityData = {{ user_activity | tojson }};
+    
+    const activityLabels = activityData.map(item => item.activity_level);
+    const activityCounts = activityData.map(item => parseInt(item.user_count));
+    
+    new Chart(activityCtx, {
+        type: 'bar',
+        data: {
+            labels: activityLabels,
+            datasets: [{
+                label: 'Number of Users',
+                data: activityCounts,
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(139, 92, 246, 0.8)'
+                ],
+                borderColor: [
+                    'rgb(239, 68, 68)',
+                    'rgb(245, 158, 11)',
+                    'rgb(59, 130, 246)',
+                    'rgb(16, 185, 129)',
+                    'rgb(139, 92, 246)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
