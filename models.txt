@@ -1,0 +1,109 @@
+User:
+-id(auto increment)
+-name(String(80))
+-email(string(80), unique)
+-password(string(80))
+-role(Integer) //1 for admin, 2 for User
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+Vehicle:
+-id(auto increment)
+-make(String(80))
+-model(string(80))
+-year(YEAR)
+-mileage(Integer) //kilometers
+-engine_type(String(80)) //petrol, diesel
+-transmission(String(80)) //AUTO, MANUAL
+-body_type(String(80)) // Sedan, SUV, Truck, etc.
+-color(String(80))
+-price(Decimal(10, 2)) eg 12000.50 
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+VehicleImage:
+-id(auto increment)
+-vehicle_id(Integer)
+-image_url(String(80)) eg images/v0212.jpg
+-is_primary(Boolean, default=False)
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+Category:
+-id(auto increment)
+-name(String(80))
+-description(string(300))
+
+VehicleCategory:
+-id(auto increment)
+-vehicle_id(Integer)
+-category_id(Integer)
+
+Order:
+-id(auto increment)
+-user_id(Integer)
+-vehicle_id(Integer)
+-price(Decimal)
+-status(String(80)) // pending, paid, failed, refunded
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+Payment:
+-id(auto increment)
+-order_id(Integer)
+-amount(Decimal)
+-method(String(80)) // Credit Card, PayPal, Bank Transfer, Mobile Money, etc.
+-refence(String(80), unique)
+-status(String(80)) // success, failed, pending
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+
+Negotiation:
+-id(auto increment)
+-user_id(Integer)
+-vehicle_id(Integer)
+-status(String(80)) // ongoing, accepted, rejected, expired
+-final_price(Decimal) // nullable until accepted
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+NegotiationOffer:
+-id(auto increment)
+-negotiation_id(Integer)
+-offer_by(Enum) // BUYER, AI
+-offer_price(Decimal)
+-reason(String(200)) // optional: e.g. “customer loyalty discount”, “AI counter-offer”
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+DiscountRule:
+-id(auto increment)
+-vehicle_id(Integer)
+-max_discount_percentage(Decimal) // from 0.01 to 99.99
+-min_price_allowed(Decimal)
+
+CustomerHistory:
+-id(auto increment)
+-user_id(Integer)
+-total_purchases(Integer) // count of completed purchases
+-total_spent(Decimal) // lifetime value
+-avg_rating(Decimal) //from reviews
+-last_purchase_date(Datetime)
+
+CustomerRating:
+-id(auto increment)
+-user_id(Integer)
+-avg_rating(Integer) // 1 - 5
+-reason(String(200)) // loyalty, late payments, negotiation behaviour, etc
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()
+
+Review: //this one is for users to rate the platform
+-id(auto increment)
+-user_id(Integer)
+-message(String(300))
+-rating(Integer) // 1 - 5
+-craeted_at(Datetime) //now()
+-updated_at(Datetime) //now()

@@ -1,0 +1,234 @@
+{% extends "layout.html" %}
+
+{% block title %}Browse Vehicles - AutoDeal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Browse Vehicles</h1>
+            <p class="text-gray-600">Discover your perfect vehicle from our extensive collection</p>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="lg:col-span-2">
+                    <input type="text" name="search" value="{{ search_query }}" 
+                           placeholder="Search by make, model, or description"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <!-- Category Filter -->
+                <div>
+                    <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Sort -->
+                <div>
+                    <select name="sort" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="price" {% if sort_by == 'price' %}selected{% endif %}>Price</option>
+                        <option value="year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                        <option value="mileage" {% if sort_by == 'mileage' %}selected{% endif %}>Mileage</option>
+                    </select>
+                </div>
+                
+                <!-- Price Range -->
+                <div class="lg:col-span-2 grid grid-cols-2 gap-4">
+                    <input type="number" name="min_price" value="{{ min_price or '' }}" 
+                           placeholder="Min Price" step="0.01"
+                           class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <input type="number" name="max_price" value="{{ max_price or '' }}" 
+                           placeholder="Max Price" step="0.01"
+                           class="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <!-- Sort Order -->
+                <div>
+                    <select name="order" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>High to Low</option>
+                        <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Low to High</option>
+                    </select>
+                </div>
+                
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                        Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="text-gray-600">
+                {% if vehicles.total > 0 %}
+                    Showing {{ (vehicles.page - 1) * vehicles.per_page + 1 }} to 
+                    {{ vehicles.page * vehicles.per_page if vehicles.page * vehicles.per_page < vehicles.total else vehicles.total }} 
+                    of {{ vehicles.total }} vehicles
+                {% else %}
+                    No vehicles found
+                {% endif %}
+            </div>
+            
+            <!-- Advanced Search Link -->
+            <a href="{{ url_for('vehicles.search') }}" 
+               class="text-blue-600 hover:text-blue-700 font-medium">
+                Advanced Search
+            </a>
+        </div>
+
+        <!-- Vehicles Grid -->
+        {% if vehicles.items %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                {% for vehicle in vehicles.items %}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                        <!-- Vehicle Image -->
+                        <div class="relative h-48 bg-gray-200">
+                            {% set primary_image = vehicle.images|selectattr('is_primary', 'equalto', true)|first %}
+                            {% if primary_image %}
+                                <img src="{{ primary_image.image_url }}" alt="{{ vehicle.make }} {{ vehicle.model }}" 
+                                     class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Price Badge -->
+                            <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
+                                <span class="text-lg font-bold text-gray-900">${{ "%.2f"|format(vehicle.price) }}</span>
+                            </div>
+                            
+                            <!-- Favorite Button -->
+                            <button class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors duration-200">
+                                <svg class="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Vehicle Details -->
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                {{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}
+                            </h3>
+                            
+                            <div class="flex items-center text-sm text-gray-600 mb-2">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ "{:,}".format(vehicle.mileage) }} miles
+                            </div>
+                            
+                            <div class="flex items-center text-sm text-gray-600 mb-3">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                {{ vehicle.location }}
+                            </div>
+                            
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                <span class="capitalize">{{ vehicle.fuel_type }}</span>
+                                <span class="capitalize">{{ vehicle.transmission }}</span>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-2">
+                                <a href="{{ url_for('vehicles.detail', vehicle_id=vehicle.id) }}" 
+                                   class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                                    View Details
+                                </a>
+                                <button class="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition duration-200">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if vehicles.pages > 1 %}
+                <div class="flex justify-center">
+                    <nav class="flex items-center space-x-2">
+                        {% if vehicles.has_prev %}
+                            <a href="{{ url_for('vehicles.browse', page=vehicles.prev_num, search=search_query, category=category_id, min_price=min_price, max_price=max_price, sort=sort_by, order=sort_order) }}" 
+                               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Previous
+                            </a>
+                        {% endif %}
+                        
+                        {% for page_num in vehicles.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != vehicles.page %}
+                                    <a href="{{ url_for('vehicles.browse', page=page_num, search=search_query, category=category_id, min_price=min_price, max_price=max_price, sort=sort_by, order=sort_order) }}" 
+                                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                        {{ page_num }}
+                                    </a>
+                                {% else %}
+                                    <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg">
+                                        {{ page_num }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="px-3 py-2 text-sm font-medium text-gray-400">...</span>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if vehicles.has_next %}
+                            <a href="{{ url_for('vehicles.browse', page=vehicles.next_num, search=search_query, category=category_id, min_price=min_price, max_price=max_price, sort=sort_by, order=sort_order) }}" 
+                               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Next
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- No Results -->
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709M15 6.291A7.962 7.962 0 0012 5c-2.34 0-4.29 1.009-5.824 2.709M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No vehicles found</h3>
+                <p class="text-gray-600 mb-4">Try adjusting your search criteria or browse all vehicles.</p>
+                <a href="{{ url_for('vehicles.browse') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
+                    Browse All Vehicles
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Auto-submit form on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const selects = form.querySelectorAll('select');
+    
+    selects.forEach(select => {
+        select.addEventListener('change', function() {
+            form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

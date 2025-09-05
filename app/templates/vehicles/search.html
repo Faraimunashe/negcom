@@ -1,0 +1,384 @@
+{% extends "layout.html" %}
+
+{% block title %}Advanced Search - AutoDeal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Advanced Vehicle Search</h1>
+            <p class="text-gray-600">Use our advanced filters to find exactly what you're looking for</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Search Filters Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-6">Search Filters</h2>
+                    
+                    <form id="search-form" class="space-y-6">
+                        <!-- Search Query -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                            <input type="text" id="search-query" name="q" 
+                                   placeholder="Make, model, or description"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        
+                        <!-- Category -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                            <select id="category" name="category" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Price Range -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="min-price" name="min_price" 
+                                       placeholder="Min" step="0.01"
+                                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="number" id="max-price" name="max_price" 
+                                       placeholder="Max" step="0.01"
+                                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <!-- Year Range -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Year Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="min-year" name="min_year" 
+                                       placeholder="Min" min="1900" max="2030"
+                                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="number" id="max-year" name="max_year" 
+                                       placeholder="Max" min="1900" max="2030"
+                                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <!-- Mileage Range -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mileage Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="min-mileage" name="min_mileage" 
+                                       placeholder="Min" min="0"
+                                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="number" id="max-mileage" name="max_mileage" 
+                                       placeholder="Max" min="0"
+                                       class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <!-- Fuel Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Fuel Type</label>
+                            <select id="fuel-type" name="fuel_type" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">All Fuel Types</option>
+                                <option value="petrol">Petrol</option>
+                                <option value="diesel">Diesel</option>
+                                <option value="hybrid">Hybrid</option>
+                                <option value="electric">Electric</option>
+                                <option value="lpg">LPG</option>
+                                <option value="cng">CNG</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Transmission -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Transmission</label>
+                            <select id="transmission" name="transmission" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">All Transmissions</option>
+                                <option value="manual">Manual</option>
+                                <option value="automatic">Automatic</option>
+                                <option value="semi-automatic">Semi-Automatic</option>
+                                <option value="cvt">CVT</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Sort By -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                            <select id="sort-by" name="sort" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="created_at">Newest First</option>
+                                <option value="price_asc">Price: Low to High</option>
+                                <option value="price_desc">Price: High to Low</option>
+                                <option value="year_desc">Year: Newest First</option>
+                                <option value="year_asc">Year: Oldest First</option>
+                                <option value="mileage_asc">Mileage: Low to High</option>
+                                <option value="mileage_desc">Mileage: High to Low</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <button type="submit" 
+                                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                                Search Vehicles
+                            </button>
+                            <button type="button" id="clear-filters" 
+                                    class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
+                                Clear Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Search Results -->
+            <div class="lg:col-span-3">
+                <!-- Results Header -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-900">Search Results</h2>
+                            <p id="results-count" class="text-gray-600 mt-1">Enter your search criteria to find vehicles</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">View:</span>
+                            <button id="grid-view" class="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                </svg>
+                            </button>
+                            <button id="list-view" class="p-2 text-gray-400 hover:text-gray-600 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading State -->
+                <div id="loading-state" class="hidden text-center py-12">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p class="text-gray-600 mt-2">Searching vehicles...</p>
+                </div>
+                
+                <!-- Results Container -->
+                <div id="results-container" class="space-y-6">
+                    <!-- Initial state -->
+                    <div class="text-center py-12">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Start Your Search</h3>
+                        <p class="text-gray-600">Use the filters on the left to find your perfect vehicle</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('search-form');
+    const resultsContainer = document.getElementById('results-container');
+    const resultsCount = document.getElementById('results-count');
+    const loadingState = document.getElementById('loading-state');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const gridViewBtn = document.getElementById('grid-view');
+    const listViewBtn = document.getElementById('list-view');
+    
+    let currentView = 'grid';
+    
+    // Search form submission
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        performSearch();
+    });
+    
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+        searchForm.reset();
+        resultsContainer.innerHTML = `
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Start Your Search</h3>
+                <p class="text-gray-600">Use the filters on the left to find your perfect vehicle</p>
+            </div>
+        `;
+        resultsCount.textContent = 'Enter your search criteria to find vehicles';
+    });
+    
+    // View toggle
+    gridViewBtn.addEventListener('click', function() {
+        currentView = 'grid';
+        gridViewBtn.classList.add('bg-blue-100', 'text-blue-600');
+        gridViewBtn.classList.remove('text-gray-400');
+        listViewBtn.classList.remove('bg-blue-100', 'text-blue-600');
+        listViewBtn.classList.add('text-gray-400');
+        updateView();
+    });
+    
+    listViewBtn.addEventListener('click', function() {
+        currentView = 'list';
+        listViewBtn.classList.add('bg-blue-100', 'text-blue-600');
+        listViewBtn.classList.remove('text-gray-400');
+        gridViewBtn.classList.remove('bg-blue-100', 'text-blue-600');
+        gridViewBtn.classList.add('text-gray-400');
+        updateView();
+    });
+    
+    function performSearch() {
+        const formData = new FormData(searchForm);
+        const params = new URLSearchParams();
+        
+        for (let [key, value] of formData.entries()) {
+            if (value.trim()) {
+                params.append(key, value);
+            }
+        }
+        
+        // Show loading state
+        loadingState.classList.remove('hidden');
+        resultsContainer.innerHTML = '';
+        
+        // Perform AJAX search
+        fetch(`{{ url_for('vehicles.api_search') }}?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                loadingState.classList.add('hidden');
+                displayResults(data.vehicles);
+                resultsCount.textContent = `Found ${data.total} vehicles`;
+            })
+            .catch(error => {
+                loadingState.classList.add('hidden');
+                resultsContainer.innerHTML = `
+                    <div class="text-center py-12">
+                        <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Search Error</h3>
+                        <p class="text-gray-600">There was an error performing your search. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function displayResults(vehicles) {
+        if (vehicles.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709M15 6.291A7.962 7.962 0 0012 5c-2.34 0-4.29 1.009-5.824 2.709M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No vehicles found</h3>
+                    <p class="text-gray-600">Try adjusting your search criteria</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const containerClass = currentView === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+            : 'space-y-4';
+        
+        resultsContainer.innerHTML = `<div class="${containerClass}">${vehicles.map(vehicle => createVehicleCard(vehicle)).join('')}</div>`;
+    }
+    
+    function createVehicleCard(vehicle) {
+        if (currentView === 'grid') {
+            return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <div class="relative h-48 bg-gray-200">
+                        <img src="${vehicle.image_url}" alt="${vehicle.make} ${vehicle.model}" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1">
+                            <span class="text-lg font-bold text-gray-900">$${vehicle.price.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                            ${vehicle.year} ${vehicle.make} ${vehicle.model}
+                        </h3>
+                        <div class="flex items-center text-sm text-gray-600 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ${vehicle.mileage.toLocaleString()} miles
+                        </div>
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <span class="capitalize">${vehicle.fuel_type}</span>
+                            <span class="capitalize">${vehicle.transmission}</span>
+                        </div>
+                        <a href="/vehicles/${vehicle.id}" 
+                           class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300">
+                    <div class="flex items-center space-x-6">
+                        <div class="flex-shrink-0">
+                            <img src="${vehicle.image_url}" alt="${vehicle.make} ${vehicle.model}" 
+                                 class="w-32 h-24 object-cover rounded-lg">
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-1">
+                                ${vehicle.year} ${vehicle.make} ${vehicle.model}
+                            </h3>
+                            <div class="flex items-center text-sm text-gray-600 mb-2">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                ${vehicle.mileage.toLocaleString()} miles
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <span class="capitalize mr-4">${vehicle.fuel_type}</span>
+                                <span class="capitalize">${vehicle.transmission}</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 text-right">
+                            <div class="text-2xl font-bold text-gray-900 mb-2">$${vehicle.price.toFixed(2)}</div>
+                            <a href="/vehicles/${vehicle.id}" 
+                               class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    function updateView() {
+        const currentResults = resultsContainer.querySelector('.grid, .space-y-4');
+        if (currentResults && currentResults.children.length > 0) {
+            const vehicles = Array.from(currentResults.children).map(card => {
+                // Extract vehicle data from existing cards (simplified)
+                return {
+                    id: card.querySelector('a').href.split('/').pop(),
+                    make: card.querySelector('h3').textContent.split(' ')[1],
+                    model: card.querySelector('h3').textContent.split(' ')[2],
+                    year: card.querySelector('h3').textContent.split(' ')[0],
+                    price: parseFloat(card.querySelector('.text-lg, .text-2xl').textContent.replace('$', '')),
+                    mileage: parseInt(card.querySelector('.text-sm').textContent.replace(/,/g, '').split(' ')[0]),
+                    fuel_type: card.querySelector('.capitalize').textContent,
+                    transmission: card.querySelectorAll('.capitalize')[1]?.textContent || 'N/A',
+                    image_url: card.querySelector('img').src
+                };
+            });
+            displayResults(vehicles);
+        }
+    }
+});
+</script>
+{% endblock %}

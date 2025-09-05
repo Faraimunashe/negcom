@@ -1,0 +1,194 @@
+{% extends "layout.html" %}
+
+{% block title %}My Negotiations - AutoDeal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">My Negotiations</h1>
+            <p class="text-gray-600">Manage your vehicle purchase negotiations</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <a href="{{ url_for('negotiations.index') }}" 
+                       class="border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
+                        All Negotiations
+                    </a>
+                    <a href="{{ url_for('negotiations.my_offers') }}" 
+                       class="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        My Offers
+                    </a>
+                    <a href="{{ url_for('negotiations.received_offers') }}" 
+                       class="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Received Offers
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="text-gray-600">
+                {% if negotiations.total > 0 %}
+                    Showing {{ (negotiations.page - 1) * negotiations.per_page + 1 }} to 
+                    {{ negotiations.page * negotiations.per_page if negotiations.page * negotiations.per_page < negotiations.total else negotiations.total }} 
+                    of {{ negotiations.total }} negotiations
+                {% else %}
+                    No negotiations found
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Negotiations List -->
+        {% if negotiations.items %}
+            <div class="space-y-6">
+                {% for negotiation in negotiations.items %}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-300">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <!-- Vehicle Info -->
+                                <div class="flex items-center space-x-4 mb-4">
+                                    <div class="w-20 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                        {% set primary_image = negotiation.vehicle.images|selectattr('is_primary', 'equalto', true)|first %}
+                                        {% if primary_image %}
+                                            <img src="{{ primary_image.image_url }}" alt="{{ negotiation.vehicle.make }} {{ negotiation.vehicle.model }}" 
+                                                 class="w-full h-full object-cover">
+                                        {% else %}
+                                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900">
+                                            {{ negotiation.vehicle.year }} {{ negotiation.vehicle.make }} {{ negotiation.vehicle.model }}
+                                        </h3>
+                                        <p class="text-gray-600">{{ "{:,}".format(negotiation.vehicle.mileage) }} miles • {{ negotiation.vehicle.location }}</p>
+                                        <p class="text-sm text-gray-500">Asking Price: ${{ "%.2f"|format(negotiation.vehicle.price) }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Negotiation Details -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600">Initial Offer</p>
+                                        <p class="font-semibold text-gray-900">${{ "%.2f"|format(negotiation.initial_offer) }}</p>
+                                    </div>
+                                    {% if negotiation.final_price %}
+                                        <div>
+                                            <p class="text-sm text-gray-600">Final Price</p>
+                                            <p class="font-semibold text-green-600">${{ "%.2f"|format(negotiation.final_price) }}</p>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <p class="text-sm text-gray-600">Status</p>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                            {% if negotiation.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                            {% elif negotiation.status == 'active' %}bg-blue-100 text-blue-800
+                                            {% elif negotiation.status == 'accepted' %}bg-green-100 text-green-800
+                                            {% elif negotiation.status == 'rejected' %}bg-red-100 text-red-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ negotiation.status.title() }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Participants -->
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <div class="flex items-center">
+                                        <span class="font-medium">Buyer:</span>
+                                        <span class="ml-1">{{ negotiation.buyer.name }}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="font-medium">Seller:</span>
+                                        <span class="ml-1">{{ negotiation.seller.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex flex-col space-y-2 ml-6">
+                                <a href="{{ url_for('negotiations.detail', negotiation_id=negotiation.id) }}" 
+                                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 text-center font-medium">
+                                    View Details
+                                </a>
+                                {% if negotiation.status in ['pending', 'active'] %}
+                                    <a href="{{ url_for('negotiations.contact', negotiation_id=negotiation.id) }}" 
+                                       class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition duration-200 text-center font-medium">
+                                        Contact
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Last Updated -->
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm text-gray-500">
+                                Last updated: {{ negotiation.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if negotiations.pages > 1 %}
+                <div class="flex justify-center mt-8">
+                    <nav class="flex items-center space-x-2">
+                        {% if negotiations.has_prev %}
+                            <a href="{{ url_for('negotiations.index', page=negotiations.prev_num) }}" 
+                               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Previous
+                            </a>
+                        {% endif %}
+                        
+                        {% for page_num in negotiations.iter_pages() %}
+                            {% if page_num %}
+                                {% if page_num != negotiations.page %}
+                                    <a href="{{ url_for('negotiations.index', page=page_num) }}" 
+                                       class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                        {{ page_num }}
+                                    </a>
+                                {% else %}
+                                    <span class="px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg">
+                                        {{ page_num }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="px-3 py-2 text-sm font-medium text-gray-400">...</span>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if negotiations.has_next %}
+                            <a href="{{ url_for('negotiations.index', page=negotiations.next_num) }}" 
+                               class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Next
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- No Results -->
+            <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No negotiations found</h3>
+                <p class="text-gray-600 mb-4">You haven't started any negotiations yet.</p>
+                <a href="{{ url_for('vehicles.browse') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
+                    Browse Vehicles
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

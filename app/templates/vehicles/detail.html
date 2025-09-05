@@ -1,0 +1,290 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }} - AutoDeal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <nav class="mb-8">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li><a href="{{ url_for('vehicles.browse') }}" class="hover:text-blue-600">Vehicles</a></li>
+                <li class="flex items-center">
+                    <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                    <span class="text-gray-900">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</span>
+                </li>
+            </ol>
+        </nav>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Vehicle Images -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    {% if image_objects %}
+                        <div class="relative">
+                            <!-- Main Image -->
+                            <div class="aspect-w-16 aspect-h-9 bg-gray-200">
+                                <img id="main-image" src="{{ image_objects[0].image_url }}" alt="{{ vehicle.make }} {{ vehicle.model }}" 
+                                     class="w-full h-96 object-cover">
+                            </div>
+                            
+                            <!-- Image Navigation -->
+                            {% if images|length > 1 %}
+                                <button id="prev-image" class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors duration-200">
+                                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                    </svg>
+                                </button>
+                                <button id="next-image" class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors duration-200">
+                                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </button>
+                            {% endif %}
+                            
+                            <!-- Image Counter -->
+                            <div class="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-lg text-sm">
+                                <span id="current-image">1</span> / {{ images|length }}
+                            </div>
+                        </div>
+                        
+                        <!-- Thumbnail Images -->
+                        {% if images|length > 1 %}
+                            <div class="p-4 border-t border-gray-200">
+                                <div class="flex space-x-2 overflow-x-auto">
+                                    {% for image in images %}
+                                        <button class="thumbnail-btn flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 {% if loop.first %}border-blue-500{% else %}border-gray-200{% endif %} hover:border-blue-400 transition-colors duration-200" 
+                                                data-image="{{ image.image_url }}">
+                                            <img src="{{ image.image_url }}" alt="Thumbnail {{ loop.index }}" 
+                                                 class="w-full h-full object-cover">
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-200 flex items-center justify-center">
+                            <div class="text-center text-gray-400">
+                                <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p>No images available</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Vehicle Details -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Vehicle Details</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Make</span>
+                                <span class="font-medium">{{ vehicle.make }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Model</span>
+                                <span class="font-medium">{{ vehicle.model }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Year</span>
+                                <span class="font-medium">{{ vehicle.year }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Mileage</span>
+                                <span class="font-medium">{{ "{:,}".format(vehicle.mileage) }} miles</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Fuel Type</span>
+                                <span class="font-medium capitalize">{{ vehicle.fuel_type }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Transmission</span>
+                                <span class="font-medium capitalize">{{ vehicle.transmission }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Engine Size</span>
+                                <span class="font-medium">{{ vehicle.engine_size or 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Color</span>
+                                <span class="font-medium capitalize">{{ vehicle.color or 'N/A' }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Location</span>
+                                <span class="font-medium">{{ vehicle.location }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Condition</span>
+                                <span class="font-medium capitalize">{{ vehicle.condition or 'N/A' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                {% if vehicle.description %}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Description</h3>
+                        <p class="text-gray-700 leading-relaxed">{{ vehicle.description }}</p>
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Price and Actions -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
+                    <div class="text-center mb-6">
+                        <div class="text-3xl font-bold text-gray-900 mb-2">${{ "%.2f"|format(vehicle.price) }}</div>
+                        <p class="text-gray-600">Asking Price</p>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="space-y-3">
+                                        <a href="{{ url_for('orders.create', vehicle_id=vehicle.id) }}" class="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-medium text-center mb-3">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                    </svg>
+                    Buy Now
+                </a>
+                <a href="{{ url_for('negotiations.create', vehicle_id=vehicle.id) }}" class="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium text-center">
+                    Make an Offer
+                </a>
+                        <button class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
+                            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            Add to Favorites
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="grid grid-cols-2 gap-4 text-center">
+                            <div>
+                                <div class="text-lg font-semibold text-gray-900">{{ vehicle.year }}</div>
+                                <div class="text-sm text-gray-600">Year</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-semibold text-gray-900">{{ "{:,}".format(vehicle.mileage) }}</div>
+                                <div class="text-sm text-gray-600">Miles</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                {% if categories %}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for category in categories %}
+                                <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+                                    {{ category.name }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Related Vehicles -->
+        {% if related_vehicles %}
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Related Vehicles</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% for related_vehicle in related_vehicles %}
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                            <div class="relative h-48 bg-gray-200">
+                                {% set primary_image = related_vehicle.images|selectattr('is_primary', 'equalto', true)|first %}
+                                {% if primary_image %}
+                                    <img src="{{ primary_image.image_url }}" alt="{{ related_vehicle.make }} {{ related_vehicle.model }}" 
+                                         class="w-full h-full object-cover">
+                                {% else %}
+                                    <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </div>
+                                {% endif %}
+                                <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
+                                    <span class="text-sm font-bold text-gray-900">${{ "%.0f"|format(related_vehicle.price) }}</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-semibold text-gray-900 mb-1">
+                                    {{ related_vehicle.year }} {{ related_vehicle.make }} {{ related_vehicle.model }}
+                                </h3>
+                                <p class="text-sm text-gray-600 mb-3">{{ "{:,}".format(related_vehicle.mileage) }} miles</p>
+                                <a href="{{ url_for('vehicles.detail', vehicle_id=related_vehicle.id) }}" 
+                                   class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image gallery functionality
+    const images = {{ images|tojson }};
+    let currentImageIndex = 0;
+    
+    if (images.length > 1) {
+        const mainImage = document.getElementById('main-image');
+        const currentImageSpan = document.getElementById('current-image');
+        const thumbnailBtns = document.querySelectorAll('.thumbnail-btn');
+        const prevBtn = document.getElementById('prev-image');
+        const nextBtn = document.getElementById('next-image');
+        
+        function updateMainImage(index) {
+            mainImage.src = images[index].url;
+            currentImageSpan.textContent = index + 1;
+            
+            // Update thumbnail selection
+            thumbnailBtns.forEach((btn, i) => {
+                btn.classList.toggle('border-blue-500', i === index);
+                btn.classList.toggle('border-gray-200', i !== index);
+            });
+        }
+        
+        // Thumbnail click handlers
+        thumbnailBtns.forEach((btn, index) => {
+            btn.addEventListener('click', () => {
+                currentImageIndex = index;
+                updateMainImage(currentImageIndex);
+            });
+        });
+        
+        // Navigation button handlers
+        prevBtn.addEventListener('click', () => {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            updateMainImage(currentImageIndex);
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            updateMainImage(currentImageIndex);
+        });
+    }
+    
+});
+</script>
+{% endblock %}

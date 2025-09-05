@@ -1,0 +1,256 @@
+{% extends "layout.html" %}
+
+{% block title %}Payment - Order #{{ order.id }} - AutoDeal{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Payment</h1>
+                    <p class="mt-2 text-gray-600">Complete your payment for Order #{{ order.id }}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-2xl font-bold text-gray-900">
+                        ${{ "%.2f"|format(order.price) }}
+                    </div>
+                    <p class="text-sm text-gray-600">Total Amount</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Payment Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Payment Information</h2>
+                        
+                        <form method="POST" id="paymentForm">
+                            {{ form.hidden_tag() }}
+                            
+                            <!-- Payment Method -->
+                            <div class="mb-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                                {{ form.payment_method(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                {% if form.payment_method.errors %}
+                                    <div class="mt-1 text-sm text-red-600">
+                                        {% for error in form.payment_method.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Credit Card Fields -->
+                            <div id="creditCardFields" class="space-y-4 mb-6" style="display: none;">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
+                                        {{ form.card_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                        {% if form.card_number.errors %}
+                                            <div class="mt-1 text-sm text-red-600">
+                                                {% for error in form.card_number.errors %}
+                                                    <p>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
+                                        {{ form.cvv(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                        {% if form.cvv.errors %}
+                                            <div class="mt-1 text-sm text-red-600">
+                                                {% for error in form.cvv.errors %}
+                                                    <p>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
+                                    {{ form.expiry_date(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if form.expiry_date.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.expiry_date.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Bank Transfer Fields -->
+                            <div id="bankTransferFields" class="space-y-4 mb-6" style="display: none;">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                                    {{ form.account_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if form.account_number.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.account_number.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Mobile Money Fields -->
+                            <div id="mobileMoneyFields" class="space-y-4 mb-6" style="display: none;">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
+                                    {{ form.mobile_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if form.mobile_number.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in form.mobile_number.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                                <a href="{{ url_for('orders.detail', order_id=order.id) }}" 
+                                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                    </svg>
+                                    Back to Order
+                                </a>
+                                {{ form.submit(class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="space-y-6">
+                <!-- Order Details -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Order ID:</span>
+                                <span class="font-medium">#{{ order.id }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Vehicle ID:</span>
+                                <span class="font-medium">#{{ order.vehicle_id }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Order Date:</span>
+                                <span class="font-medium">{{ order.created_at.strftime('%B %d, %Y') }}</span>
+                            </div>
+                            <div class="border-t pt-3">
+                                <div class="flex justify-between text-lg font-semibold">
+                                    <span>Total Amount:</span>
+                                    <span class="text-green-600">${{ "%.2f"|format(order.price) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Notice -->
+                <div class="bg-blue-50 rounded-xl border border-blue-200">
+                    <div class="p-6">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-blue-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <div>
+                                <h4 class="text-sm font-medium text-blue-900">Secure Payment</h4>
+                                <p class="mt-1 text-sm text-blue-700">
+                                    Your payment information is encrypted and secure. We use industry-standard security measures to protect your data.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods Info -->
+                <div class="bg-gray-50 rounded-xl border border-gray-200">
+                    <div class="p-6">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Accepted Payment Methods</h4>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Credit/Debit Cards
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                PayPal
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Bank Transfer
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                Mobile Money
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const creditCardFields = document.getElementById('creditCardFields');
+    const bankTransferFields = document.getElementById('bankTransferFields');
+    const mobileMoneyFields = document.getElementById('mobileMoneyFields');
+
+    function togglePaymentFields() {
+        // Hide all fields first
+        creditCardFields.style.display = 'none';
+        bankTransferFields.style.display = 'none';
+        mobileMoneyFields.style.display = 'none';
+
+        // Show relevant fields based on selection
+        const selectedMethod = paymentMethodSelect.value;
+        if (selectedMethod === 'credit_card') {
+            creditCardFields.style.display = 'block';
+        } else if (selectedMethod === 'bank_transfer') {
+            bankTransferFields.style.display = 'block';
+        } else if (selectedMethod === 'mobile_money') {
+            mobileMoneyFields.style.display = 'block';
+        }
+    }
+
+    // Initial call
+    togglePaymentFields();
+
+    // Add event listener
+    paymentMethodSelect.addEventListener('change', togglePaymentFields);
+
+    // Form submission with loading state
+    const form = document.getElementById('paymentForm');
+    const submitButton = form.querySelector('input[type="submit"]');
+    
+    form.addEventListener('submit', function() {
+        submitButton.disabled = true;
+        submitButton.value = 'Processing...';
+        submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+    });
+});
+</script>
+{% endblock %}

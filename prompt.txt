@@ -1,0 +1,9 @@
+This is a flask web application that sells vehicles online. I want use TailwindCss(CDN) for styling.
+If you read in models.txt you will see my expected model which i want to create in models.py
+I want the user to be able to negotiate the price of a vehicle.
+This process might go back and forth. 
+For example the user negotiates to buy a $10000 car at $8000.
+The admin(or AI model) considers customer buying history, price of the car, price offered by customer, discount offable for that vehicle and customer rating. 
+They might discount the car to a discountable fee, to customer asking price or might suggest like in my example $9500 or might not consider discounting for that customer at all. 
+Customers should be able to review the system, whilist admins can rate customer or customer maybe automatically reviewed.
+We will create the AI model when everything else is done.
