@@ -67,7 +67,7 @@ def register():
         
         try:
             # Create new user
-            password_hash = sha256_crypt.encrypt(password)
+            password_hash = sha256_crypt.hash(password)
             new_user = User(email=email, password=password_hash, name=name, role=2)  # role=2 for regular user
             db.session.add(new_user)
             db.session.commit()
@@ -88,5 +88,5 @@ def logout():
     user_name = current_user.name
     logout_user()
     session.clear()
-    flash(f'You have been logged out successfully. Goodbye, {user_name}!', 'info')
+    flash(f'You have been logged out successfully. Goodbye, {user_name}!', 'success')
     return redirect(url_for('auth.login'))

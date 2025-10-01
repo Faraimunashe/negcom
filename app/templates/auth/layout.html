@@ -147,62 +147,58 @@
             left: 20%;
             animation-delay: 4s;
         }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Ensure content is scrollable on mobile */
+        @media (max-width: 640px) {
+            .min-h-screen {
+                min-height: 100vh;
+            }
+        }
+        
+        /* Make success messages more visible */
+        .toast-notification {
+            z-index: 10000 !important;
+        }
     </style>
 </head>
-<body class="min-h-screen gradient-bg relative overflow-hidden">
+<body class="min-h-screen gradient-bg relative overflow-y-auto">
     <!-- Floating Background Shapes -->
     <div class="floating-shapes">
         <div class="shape"></div>
         <div class="shape"></div>
         <div class="shape"></div>
     </div>
-    <!-- Flash Messages -->
+    <!-- Success Messages Only -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             <div class="fixed top-4 right-4 z-[9999] space-y-3 max-w-sm w-full sm:max-w-md">
                 {% for category, message in messages %}
+                    {% if category == 'success' %}
                     <div class="toast-notification transform transition-all duration-500 ease-in-out translate-x-full opacity-0" 
                          style="animation: slideInRight 0.5s ease-out forwards;">
-                        <div class="bg-white/95 backdrop-blur-sm shadow-2xl rounded-xl border border-white/20 overflow-hidden">
+                        <div class="bg-green-500/95 backdrop-blur-sm shadow-2xl rounded-xl border border-green-400/50 overflow-hidden">
                             <div class="p-4">
                                 <div class="flex items-start space-x-3">
                                     <div class="flex-shrink-0">
-                                        {% if category == 'success' %}
-                                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                                <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </div>
-                                        {% elif category == 'error' %}
-                                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                                                <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </div>
-                                        {% elif category == 'info' %}
-                                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                                <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </div>
-                                        {% else %}
-                                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                                <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                            </div>
-                                        {% endif %}
+                                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <h4 class="text-sm font-semibold text-gray-900 mb-1">
-                                            {% if category == 'success' %}Success!{% elif category == 'error' %}Error{% elif category == 'info' %}Info{% else %}Notification{% endif %}
-                                        </h4>
-                                        <p class="text-sm text-gray-700 leading-relaxed">{{ message }}</p>
+                                        <h4 class="text-sm font-semibold text-white mb-1">Success!</h4>
+                                        <p class="text-sm text-white/90 leading-relaxed">{{ message }}</p>
                                     </div>
                                     <div class="flex-shrink-0">
-                                        <button class="toast-close-btn bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300" 
+                                        <button class="toast-close-btn bg-white/20 hover:bg-white/30 rounded-full p-1.5 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/30" 
                                                 onclick="closeToast(this)">
-                                            <svg class="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                                            <svg class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                                             </svg>
                                         </button>
@@ -210,41 +206,42 @@
                                 </div>
                             </div>
                             <!-- Progress bar -->
-                            <div class="h-1 bg-gray-200">
-                                <div class="toast-progress h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-5000 ease-linear" style="width: 100%;"></div>
+                            <div class="h-1 bg-white/20">
+                                <div class="toast-progress h-full bg-white/60 transition-all duration-5000 ease-linear" style="width: 100%;"></div>
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                 {% endfor %}
             </div>
         {% endif %}
     {% endwith %}
 
     <!-- Main Content -->
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-        <div class="max-w-md w-full space-y-8 animate-fade-in">
+    <div class="min-h-screen flex items-start justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="max-w-sm sm:max-w-md w-full space-y-6 sm:space-y-8 animate-fade-in my-8">
             <!-- Header -->
             <div class="text-center animate-slide-up">
                 <a href="{{ url_for('auth.index') }}" class="inline-block group">
-                    <div class="flex items-center justify-center mb-4">
-                        <div class="bg-white/20 backdrop-blur-sm rounded-full p-4 group-hover:scale-110 transition-transform duration-300">
-                            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="flex items-center justify-center mb-3 sm:mb-4">
+                        <div class="bg-white/20 backdrop-blur-sm rounded-full p-3 sm:p-4 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-8 h-8 sm:w-12 sm:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                             </svg>
                         </div>
                     </div>
-                    <h1 class="text-5xl font-bold text-white mb-2 tracking-tight">AutoDeal</h1>
+                    <h1 class="text-3xl sm:text-5xl font-bold text-white mb-2 tracking-tight">AutoDeal</h1>
                 </a>
-                <h2 class="text-2xl font-semibold text-white/90 mb-3">
+                <h2 class="text-xl sm:text-2xl font-semibold text-white/90 mb-2 sm:mb-3">
                     {% block page_title %}{{ title }}{% endblock %}
                 </h2>
-                <p class="text-white/70 text-lg">
+                <p class="text-white/70 text-sm sm:text-lg">
                     {% block page_description %}Your trusted vehicle marketplace{% endblock %}
                 </p>
             </div>
 
             <!-- Form Container -->
-            <div class="glass-effect py-10 px-8 rounded-2xl shadow-2xl animate-scale-in">
+            <div class="glass-effect py-6 sm:py-10 px-4 sm:px-8 rounded-xl sm:rounded-2xl shadow-2xl animate-scale-in">
                 {% block auth_content %}{% endblock %}
             </div>
 

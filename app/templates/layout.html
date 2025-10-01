@@ -107,26 +107,45 @@
                     {% if current_user.is_authenticated %}
                         <div class="hidden md:flex items-center space-x-4">
                             <span class="text-gray-700 font-medium">Welcome, {{ current_user.name }}!</span>
-                            <a href="{{ url_for('dashboard.dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
-                                Dashboard
-                            </a>
-                            <a href="{{ url_for('vehicles.browse') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
-                                Browse Vehicles
-                            </a>
-                            <a href="{{ url_for('vehicles.search') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
-                                Advanced Search
-                            </a>
-                                            <a href="{{ url_for('negotiations.index') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
-                    My Negotiations
-                </a>
-                <a href="{{ url_for('orders.index') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
-                    My Orders
-                </a>
-                {% if current_user.role == 1 %}
-                <a href="{{ url_for('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
-                    Admin Panel
-                </a>
-                {% endif %}
+                            
+                            {% if current_user.role == 1 %}
+                                <!-- Admin Navigation -->
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Admin Dashboard
+                                </a>
+                                <a href="{{ url_for('admin.vehicles') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Manage Vehicles
+                                </a>
+                                <a href="{{ url_for('admin.users') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Manage Users
+                                </a>
+                                <a href="{{ url_for('admin.orders') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Manage Orders
+                                </a>
+                                <a href="{{ url_for('admin.negotiations') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Manage Negotiations
+                                </a>
+                                <a href="{{ url_for('admin.reports') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Reports
+                                </a>
+                            {% else %}
+                                <!-- Regular User Navigation -->
+                                <a href="{{ url_for('dashboard.dashboard') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Dashboard
+                                </a>
+                                <a href="{{ url_for('vehicles.browse') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Browse Vehicles
+                                </a>
+                                <a href="{{ url_for('vehicles.search') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    Advanced Search
+                                </a>
+                                <a href="{{ url_for('negotiations.index') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    My Negotiations
+                                </a>
+                                <a href="{{ url_for('orders.index') }}" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 hover:bg-gray-100">
+                                    My Orders
+                                </a>
+                            {% endif %}
                         </div>
                         <div class="flex items-center space-x-2">
                             <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">

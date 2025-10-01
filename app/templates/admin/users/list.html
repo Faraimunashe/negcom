@@ -123,7 +123,7 @@
 
     <!-- Bulk Actions -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <form id="bulkForm" method="POST" action="{{ url_for('admin.bulk_user_actions') }}">
+        <!-- Bulk actions removed - route not implemented -->
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
                     <label class="flex items-center">
@@ -221,8 +221,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.created_at.strftime('%b %d, %Y') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-end space-x-2">
-                                <a href="{{ url_for('admin.view_user', user_id=user.id) }}" class="text-blue-600 hover:text-blue-900">View</a>
-                                <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="text-blue-600 hover:text-blue-900">View</a>
                                 {% if user.id != current_user.id %}
                                     <button onclick="confirmDelete({{ user.id }}, '{{ user.name }}')" class="text-red-600 hover:text-red-900">Delete</button>
                                 {% endif %}

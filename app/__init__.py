@@ -11,7 +11,7 @@ mail = Mail()
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'ProfessorSecret'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vehicle_sales.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///negcom.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -28,6 +28,9 @@ def create_app():
     
     # Configure Flask-Login
     login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.login_message_category = 'info'
+    login_manager.session_protection = 'strong'
 
     # Register blueprints
     from .auth import auth_bp
