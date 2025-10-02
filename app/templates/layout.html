@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Vehicle Sales Platform{% endblock %}</title>
+    <title>{% block title %}SmartDealChat System{% endblock %}</title>
     
     <!-- TailwindCSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Custom Tailwind Configuration -->
     <script>
@@ -97,7 +100,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                     </svg>
                                 </div>
-                                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AutoDeal</h1>
+                                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">SmartDealChat</h1>
                             </div>
                         </div>
                     </a>
@@ -148,6 +151,31 @@
                             {% endif %}
                         </div>
                         <div class="flex items-center space-x-2">
+                            <!-- Notification Bell -->
+                            <div class="relative">
+                                <button id="notification-bell" class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                                    <i class="fa-solid fa-bell"></i>
+                                    <!-- Unread count badge -->
+                                    <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">
+                                        0
+                                    </span>
+                                </button>
+                                
+                                <!-- Notification Dropdown -->
+                                <div id="notification-dropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 hidden">
+                                    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                                        <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                                        <button id="mark-all-read" class="text-sm text-blue-600 hover:text-blue-800">Mark all as read</button>
+                                    </div>
+                                    <div id="notification-list" class="max-h-96 overflow-y-auto">
+                                        <div class="p-4 text-center text-gray-500">Loading notifications...</div>
+                                    </div>
+                                    <div class="p-4 border-t border-gray-200 text-center">
+                                        <a href="{{ url_for('notifications.notifications_page') }}" class="text-sm text-blue-600 hover:text-blue-800">View all notifications</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                                 <span class="text-white text-sm font-semibold">{{ current_user.name[0].upper() }}</span>
                             </div>
@@ -232,6 +260,11 @@
         {% endif %}
     {% endwith %}
 
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- Toast notifications will appear here -->
+    </div>
+
     <!-- Main Content -->
     <main class="fade-in">
         {% block content %}{% endblock %}
@@ -241,7 +274,7 @@
     <footer class="bg-gray-800 text-white mt-auto">
         <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <p class="text-gray-300">&copy; 2024 AutoDeal - Vehicle Sales Platform. All rights reserved.</p>
+                <p class="text-gray-300">&copy; 2024 SmartDealChat System. All rights reserved.</p>
                 <p class="text-gray-400 text-sm mt-2">Find your perfect vehicle with our AI-powered negotiation system.</p>
             </div>
         </div>
@@ -283,6 +316,238 @@
                     closeToast(closeBtn);
                 }
             }
+        });
+    </script>
+
+    <!-- Notification Manager JavaScript -->
+    <script>
+        class NotificationManager {
+            constructor() {
+                this.pollInterval = 30000; // Poll every 30 seconds
+                this.lastCheck = Date.now();
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.loadNotifications();
+                this.startPolling();
+            }
+            
+            setupEventListeners() {
+                // Notification bell click
+                const bell = document.getElementById('notification-bell');
+                if (bell) {
+                    bell.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.toggleDropdown();
+                    });
+                }
+                
+                // Mark all as read
+                const markAllBtn = document.getElementById('mark-all-read');
+                if (markAllBtn) {
+                    markAllBtn.addEventListener('click', () => {
+                        this.markAllAsRead();
+                    });
+                }
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#notification-bell') && !e.target.closest('#notification-dropdown')) {
+                        this.closeDropdown();
+                    }
+                });
+            }
+            
+            async loadNotifications() {
+                try {
+                    const response = await fetch('/api/notifications');
+                    if (!response.ok) throw new Error('Failed to fetch notifications');
+                    
+                    const data = await response.json();
+                    this.updateNotificationCount(data.unread_count);
+                    this.renderNotifications(data.notifications);
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                }
+            }
+            
+            async checkForNewNotifications() {
+                try {
+                    const response = await fetch(`/api/notifications/check?since=${this.lastCheck}`);
+                    if (!response.ok) throw new Error('Failed to check for new notifications');
+                    
+                    const data = await response.json();
+                    
+                    if (data.new_notifications && data.new_notifications.length > 0) {
+                        this.showToastNotifications(data.new_notifications);
+                        this.loadNotifications(); // Refresh the list
+                    }
+                    
+                    this.lastCheck = Date.now();
+                } catch (error) {
+                    console.error('Error checking for new notifications:', error);
+                }
+            }
+            
+            showToastNotifications(notifications) {
+                notifications.forEach(notification => {
+                    this.createToast(notification);
+                });
+            }
+            
+            createToast(notification) {
+                const toast = document.createElement('div');
+                toast.className = `toast-notification bg-white border-l-4 p-4 rounded-lg shadow-lg max-w-sm transform transition-all duration-300 ${
+                    notification.type === 'success' ? 'border-green-500' :
+                    notification.type === 'error' ? 'border-red-500' :
+                    notification.type === 'warning' ? 'border-yellow-500' : 'border-blue-500'
+                }`;
+                
+                toast.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-gray-900">${notification.title}</h4>
+                            <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                            <p class="text-xs text-gray-400 mt-2">${this.formatTime(notification.created_at)}</p>
+                        </div>
+                        <button class="ml-2 text-gray-400 hover:text-gray-600" onclick="this.parentElement.parentElement.remove()">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                // Add click handler for notification action
+                if (notification.action_url) {
+                    toast.style.cursor = 'pointer';
+                    toast.addEventListener('click', () => {
+                        window.location.href = notification.action_url;
+                    });
+                }
+                
+                const container = document.getElementById('toast-container');
+                if (container) {
+                    container.appendChild(toast);
+                    
+                    // Auto-remove after 5 seconds
+                    setTimeout(() => {
+                        toast.style.transform = 'translateX(100%)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => toast.remove(), 300);
+                    }, 5000);
+                }
+            }
+            
+            updateNotificationCount(count) {
+                const badge = document.getElementById('notification-count');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count > 99 ? '99+' : count;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+            }
+            
+            renderNotifications(notifications) {
+                const container = document.getElementById('notification-list');
+                if (!container) return;
+                
+                if (notifications.length === 0) {
+                    container.innerHTML = '<div class="p-4 text-center text-gray-500">No notifications</div>';
+                    return;
+                }
+                
+                container.innerHTML = notifications.map(notification => `
+                    <div class="notification-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notification.is_read ? 'bg-blue-50' : ''}" 
+                         data-id="${notification.id}" onclick="notificationManager.handleNotificationClick(${notification.id}, '${notification.action_url || ''}')">
+                        <div class="flex items-start">
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-gray-900">${notification.title}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                                <p class="text-xs text-gray-400 mt-2">${this.formatTime(notification.created_at)}</p>
+                            </div>
+                            ${!notification.is_read ? '<div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>' : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            async handleNotificationClick(notificationId, actionUrl) {
+                // Mark as read
+                await this.markAsRead(notificationId);
+                
+                // Navigate to action URL if provided
+                if (actionUrl) {
+                    window.location.href = actionUrl;
+                }
+                
+                // Refresh notifications
+                this.loadNotifications();
+            }
+            
+            async markAsRead(notificationId) {
+                try {
+                    await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+                } catch (error) {
+                    console.error('Error marking notification as read:', error);
+                }
+            }
+            
+            async markAllAsRead() {
+                try {
+                    await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+                    this.loadNotifications();
+                } catch (error) {
+                    console.error('Error marking all notifications as read:', error);
+                }
+            }
+            
+            startPolling() {
+                setInterval(() => {
+                    this.checkForNewNotifications();
+                }, this.pollInterval);
+            }
+            
+            formatTime(timestamp) {
+                const now = new Date();
+                const time = new Date(timestamp);
+                const diff = now - time;
+                
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+                return `${Math.floor(diff / 86400000)}d ago`;
+            }
+            
+            toggleDropdown() {
+                const dropdown = document.getElementById('notification-dropdown');
+                if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                    if (!dropdown.classList.contains('hidden')) {
+                        this.loadNotifications();
+                    }
+                }
+            }
+            
+            closeDropdown() {
+                const dropdown = document.getElementById('notification-dropdown');
+                if (dropdown) {
+                    dropdown.classList.add('hidden');
+                }
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Only initialize for authenticated users
+            {% if current_user.is_authenticated %}
+                window.notificationManager = new NotificationManager();
+            {% endif %}
         });
     </script>
 </body>

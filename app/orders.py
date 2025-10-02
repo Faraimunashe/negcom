@@ -4,6 +4,7 @@ from sqlalchemy import desc, asc
 from app import db
 from app.models import Order, Payment, Vehicle, User, VehicleImage
 from app.forms import PaymentForm
+from app.notification_service import NotificationService
 from datetime import datetime
 import uuid
 import random
@@ -17,7 +18,7 @@ def index():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
-    # Get orders for current user
+    # Get orders for current user with vehicle information
     orders = Order.query.filter_by(user_id=current_user.id).order_by(
         desc(Order.created_at)
     ).paginate(page=page, per_page=per_page, error_out=False)
@@ -51,6 +52,18 @@ def create(vehicle_id):
         )
         db.session.add(order)
         db.session.commit()
+        
+        # Create notification for order creation
+        NotificationService.create_notification(
+            user_id=current_user.id,
+            title="Order Placed Successfully",
+            message=f"Your order #{order.id} has been placed for {vehicle.year} {vehicle.make} {vehicle.model} - ${order.price:,.2f}",
+            type="success",
+            category="order",
+            action_url=url_for('orders.detail', order_id=order.id),
+            related_id=order.id,
+            related_type="order"
+        )
         
         flash('Order created successfully! Please proceed to payment.', 'success')
         return redirect(url_for('orders.detail', order_id=order.id))
@@ -175,9 +188,35 @@ def payment(order_id):
             if simulate_payment_processing(form.payment_method.data):
                 payment.status = 'success'
                 order.status = 'paid'
+                
+                # Create payment success notification
+                NotificationService.create_notification(
+                    user_id=current_user.id,
+                    title="Payment Successful",
+                    message=f"Your payment of ${payment.amount:,.2f} for order #{order.id} has been processed successfully!",
+                    type="success",
+                    category="order",
+                    action_url=url_for('orders.detail', order_id=order.id),
+                    related_id=order.id,
+                    related_type="order"
+                )
+                
                 flash('Payment successful! Your order has been confirmed.', 'success')
             else:
                 payment.status = 'failed'
+                
+                # Create payment failure notification
+                NotificationService.create_notification(
+                    user_id=current_user.id,
+                    title="Payment Failed",
+                    message=f"Your payment of ${payment.amount:,.2f} for order #{order.id} failed. Please try again.",
+                    type="error",
+                    category="order",
+                    action_url=url_for('orders.payment', order_id=order.id),
+                    related_id=order.id,
+                    related_type="order"
+                )
+                
                 flash('Payment failed. Please try again.', 'error')
             
             db.session.commit()

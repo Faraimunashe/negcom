@@ -91,6 +91,10 @@ class Order(db.Model):
     status = db.Column(db.String(80), nullable=False)  # pending, paid, failed, refunded
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    vehicle = db.relationship('Vehicle', backref='orders')
+    user = db.relationship('User', backref='orders')
 
     def __init__(self, user_id, vehicle_id, price, status):
         self.user_id = user_id
@@ -127,6 +131,10 @@ class Negotiation(db.Model):
     final_price = db.Column(db.Numeric(10, 2), nullable=True)  # nullable until accepted
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    vehicle = db.relationship('Vehicle', backref='negotiations')
+    user = db.relationship('User', backref='negotiations')
 
     def __init__(self, user_id, vehicle_id, status, final_price=None):
         self.user_id = user_id
@@ -212,4 +220,33 @@ class Review(db.Model):  # this one is for users to rate the platform
         self.rating = rating
         self.created_at = datetime.utcnow()
         self.updated_at = datetime.utcnow()
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # info, success, warning, error
+    category = db.Column(db.String(50), nullable=False)  # order, negotiation, system
+    is_read = db.Column(db.Boolean, default=False)
+    action_url = db.Column(db.String(200), nullable=True)  # Link to relevant page
+    related_id = db.Column(db.Integer, nullable=True)  # ID of related object
+    related_type = db.Column(db.String(50), nullable=True)  # order, negotiation, vehicle
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='notifications')
+
+    def __init__(self, user_id, title, message, type='info', category='system', 
+                 action_url=None, related_id=None, related_type=None):
+        self.user_id = user_id
+        self.title = title
+        self.message = message
+        self.type = type
+        self.category = category
+        self.action_url = action_url
+        self.related_id = related_id
+        self.related_type = related_type
+        self.is_read = False
+        self.created_at = datetime.utcnow()
 

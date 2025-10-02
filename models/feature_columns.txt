@@ -1,0 +1,13 @@
+vehicle_price
+vehicle_year
+vehicle_mileage
+vehicle_age
+customer_rating
+customer_purchase_history
+customer_negotiation_history
+offer_amount
+offer_percentage
+vehicle_category_score
+market_demand_score
+seasonal_factor
+days_on_market

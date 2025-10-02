@@ -3,7 +3,7 @@ from wtforms import StringField, PasswordField, SubmitField, DecimalField, Integ
 from wtforms.validators import DataRequired, Email, Length, EqualTo, NumberRange, Regexp, Optional, ValidationError
 from wtforms_sqlalchemy.fields import QuerySelectField
 from datetime import datetime, date, time, timedelta
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_wtf.file import FileField, FileAllowed, FileRequired, MultipleFileField
 
 
 class LoginForm(FlaskForm):
@@ -224,7 +224,62 @@ class AdminVehicleForm(FlaskForm):
     price = DecimalField('Price ($)', validators=[DataRequired(), NumberRange(min=0.01)],
                         render_kw={"placeholder": "e.g., 25000.00", "step": "0.01",
                                   "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    images = MultipleFileField('Vehicle Images', validators=[
+        FileRequired(message='At least one image is required'),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files (JPG, PNG, GIF) are allowed!')
+    ], render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent", "multiple": True, "accept": "image/*"})
     submit = SubmitField('Save Vehicle', render_kw={"class": "w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium"})
+
+class AdminVehicleEditForm(FlaskForm):
+    make = StringField('Make', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "e.g., Toyota, Honda, BMW",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    model = StringField('Model', validators=[DataRequired(), Length(min=2, max=80)],
+                       render_kw={"placeholder": "e.g., Camry, Civic, 3 Series",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    year = IntegerField('Year', validators=[DataRequired(), NumberRange(min=1900, max=2030)],
+                       render_kw={"placeholder": "e.g., 2020",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    mileage = IntegerField('Mileage (km)', validators=[DataRequired(), NumberRange(min=0)],
+                          render_kw={"placeholder": "e.g., 35000",
+                                    "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    engine_type = SelectField('Engine Type', choices=[
+        ('petrol', 'Petrol'),
+        ('diesel', 'Diesel'),
+        ('hybrid', 'Hybrid'),
+        ('electric', 'Electric'),
+        ('lpg', 'LPG'),
+        ('cng', 'CNG')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    transmission = SelectField('Transmission', choices=[
+        ('manual', 'Manual'),
+        ('automatic', 'Automatic'),
+        ('semi-automatic', 'Semi-Automatic'),
+        ('cvt', 'CVT')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    body_type = SelectField('Body Type', choices=[
+        ('Sedan', 'Sedan'),
+        ('SUV', 'SUV'),
+        ('Hatchback', 'Hatchback'),
+        ('Coupe', 'Coupe'),
+        ('Convertible', 'Convertible'),
+        ('Truck', 'Truck'),
+        ('Van', 'Van'),
+        ('Wagon', 'Wagon')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    color = StringField('Color', validators=[DataRequired(), Length(min=2, max=80)],
+                       render_kw={"placeholder": "e.g., Silver, Black, White",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    price = DecimalField('Price ($)', validators=[DataRequired(), NumberRange(min=0.01)],
+                        render_kw={"placeholder": "e.g., 25000.00", "step": "0.01",
+                                  "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    additional_images = MultipleFileField('Additional Images (Optional)', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files (JPG, PNG, GIF) are allowed!')
+    ], render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent", "multiple": True, "accept": "image/*"})
+    submit = SubmitField('Update Vehicle', render_kw={"class": "w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium"})
 
 class AdminUserForm(FlaskForm):
     name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=80)],

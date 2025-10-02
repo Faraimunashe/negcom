@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}My Orders - AutoDeal{% endblock %}
+{% block title %}My Orders - SmartDealChat{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
@@ -33,7 +33,7 @@
                                                 Order #{{ order.id }}
                                             </h3>
                                             <p class="text-sm text-gray-600">
-                                                Vehicle ID: {{ order.vehicle_id }}
+                                                {{ order.vehicle.year }} {{ order.vehicle.make }} {{ order.vehicle.model }}
                                             </p>
                                             <p class="text-sm text-gray-500">
                                                 Created: {{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}

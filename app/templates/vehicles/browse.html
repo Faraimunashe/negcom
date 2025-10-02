@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Browse Vehicles - AutoDeal{% endblock %}
+{% block title %}Browse Vehicles - SmartDealChat{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
@@ -98,14 +98,11 @@
                         <div class="relative h-48 bg-gray-200">
                             {% set primary_image = vehicle.images|selectattr('is_primary', 'equalto', true)|first %}
                             {% if primary_image %}
-                                <img src="{{ primary_image.image_url }}" alt="{{ vehicle.make }} {{ vehicle.model }}" 
+                                <img src="{{ url_for('static', filename=primary_image.image_url) }}" alt="{{ vehicle.make }} {{ vehicle.model }}" 
                                      class="w-full h-full object-cover">
                             {% else %}
-                                <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                </div>
+                                <img src="{{ url_for('static', filename='images/no-image.svg') }}" alt="No image available" 
+                                     class="w-full h-full object-cover">
                             {% endif %}
                             
                             <!-- Price Badge -->

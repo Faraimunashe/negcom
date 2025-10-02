@@ -9,7 +9,6 @@ import os
 vehicles_bp = Blueprint('vehicles', __name__, url_prefix='/vehicles')
 
 @vehicles_bp.route('/')
-@login_required
 def browse():
     """Browse all vehicles with pagination and basic filtering"""
     page = request.args.get('page', 1, type=int)
@@ -31,7 +30,7 @@ def browse():
             or_(
                 Vehicle.make.ilike(f'%{search_query}%'),
                 Vehicle.model.ilike(f'%{search_query}%'),
-                Vehicle.description.ilike(f'%{search_query}%')
+                Vehicle.body_type.ilike(f'%{search_query}%')
             )
         )
     
@@ -72,6 +71,10 @@ def browse():
         page=page, per_page=per_page, error_out=False
     )
     
+    # Get images for each vehicle
+    for vehicle in vehicles.items:
+        vehicle.images = VehicleImage.query.filter_by(vehicle_id=vehicle.id).all()
+    
     # Get categories for filter dropdown
     categories = Category.query.all()
     
@@ -93,7 +96,6 @@ def browse():
                          sort_order=sort_order)
 
 @vehicles_bp.route('/<int:vehicle_id>')
-@login_required
 def detail(vehicle_id):
     """View detailed information about a specific vehicle"""
     vehicle = Vehicle.query.get_or_404(vehicle_id)
@@ -103,7 +105,7 @@ def detail(vehicle_id):
     # Get vehicle images
     image_objects = VehicleImage.query.filter_by(vehicle_id=vehicle_id).all()
     # Convert to serializable format for JavaScript
-    images = [{'id': img.id, 'url': img.image_url, 'is_primary': img.is_primary} for img in image_objects]
+    images = [{'id': img.id, 'url': url_for('static', filename=img.image_url), 'is_primary': img.is_primary} for img in image_objects]
     
     # Get vehicle categories
     vehicle_categories = db.session.query(Category).join(VehicleCategory).filter(
@@ -120,6 +122,10 @@ def detail(vehicle_id):
                 Vehicle.id != vehicle_id,
             )
         ).limit(4).all()
+        
+        # Get images for related vehicles
+        for related_vehicle in related_vehicles:
+            related_vehicle.images = VehicleImage.query.filter_by(vehicle_id=related_vehicle.id).all()
     
     return render_template('vehicles/detail.html',
                          vehicle=vehicle,
@@ -129,7 +135,6 @@ def detail(vehicle_id):
                          related_vehicles=related_vehicles)
 
 @vehicles_bp.route('/search')
-@login_required
 def search():
     """Advanced search page with detailed filters"""
     form = VehicleSearchForm()
@@ -145,7 +150,6 @@ def search():
                          categories=categories)
 
 @vehicles_bp.route('/api/search')
-@login_required
 def api_search():
     """API endpoint for AJAX search with filters"""
     search_query = request.args.get('q', '')
@@ -169,7 +173,7 @@ def api_search():
             or_(
                 Vehicle.make.ilike(f'%{search_query}%'),
                 Vehicle.model.ilike(f'%{search_query}%'),
-                Vehicle.description.ilike(f'%{search_query}%')
+                Vehicle.body_type.ilike(f'%{search_query}%')
             )
         )
     
@@ -197,7 +201,7 @@ def api_search():
     
     # Apply fuel type filter
     if fuel_type:
-        query = query.filter(Vehicle.fuel_type == fuel_type)
+        query = query.filter(Vehicle.engine_type == fuel_type)
     
     # Apply transmission filter
     if transmission:
@@ -236,7 +240,7 @@ def api_search():
             vehicle_id=vehicle.id, is_primary=True
         ).first()
         
-        image_url = primary_image.image_url if primary_image else '/static/images/no-image.jpg'
+        image_url = url_for('static', filename=primary_image.image_url) if primary_image else url_for('static', filename='images/no-image.svg')
         
         results.append({
             'id': vehicle.id,
@@ -245,7 +249,7 @@ def api_search():
             'year': vehicle.year,
             'price': float(vehicle.price),
             'mileage': vehicle.mileage,
-            'fuel_type': vehicle.fuel_type,
+            'engine_type': vehicle.engine_type,
             'transmission': vehicle.transmission,
             'image_url': image_url,
             'created_at': vehicle.created_at.isoformat()
@@ -258,7 +262,6 @@ def api_search():
     })
 
 @vehicles_bp.route('/category/<int:category_id>')
-@login_required
 def category(category_id):
     """Browse vehicles by category"""
     category = Category.query.get_or_404(category_id)

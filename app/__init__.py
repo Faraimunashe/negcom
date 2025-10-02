@@ -11,7 +11,7 @@ mail = Mail()
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'ProfessorSecret'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///negcom.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///smartdealchat.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -39,6 +39,7 @@ def create_app():
     from .negotiations import negotiations_bp
     from .orders import orders_bp
     from .admin import admin_bp
+    from .notifications import notifications_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -46,6 +47,7 @@ def create_app():
     app.register_blueprint(negotiations_bp)
     app.register_blueprint(orders_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(notifications_bp)
 
     from app.models import User
 
