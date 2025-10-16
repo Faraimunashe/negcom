@@ -45,19 +45,19 @@
                             <div class="grid grid-cols-2 gap-4 text-sm">
                                 <div>
                                     <span class="text-gray-600">Mileage:</span>
-                                    <span class="font-medium">{{ "{:,}".format(vehicle.mileage) }} miles</span>
+                                    <span class="font-medium">{{ "{:,}".format(vehicle.mileage) }} km</span>
                                 </div>
                                 <div>
-                                    <span class="text-gray-600">Location:</span>
-                                    <span class="font-medium">{{ vehicle.location }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-gray-600">Fuel Type:</span>
-                                    <span class="font-medium capitalize">{{ vehicle.fuel_type }}</span>
+                                    <span class="text-gray-600">Engine:</span>
+                                    <span class="font-medium capitalize">{{ vehicle.engine_type }}</span>
                                 </div>
                                 <div>
                                     <span class="text-gray-600">Transmission:</span>
                                     <span class="font-medium capitalize">{{ vehicle.transmission }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Color:</span>
+                                    <span class="font-medium capitalize">{{ vehicle.color }}</span>
                                 </div>
                             </div>
                         </div>
@@ -138,12 +138,12 @@
                         <div class="flex justify-between">
                             <span class="text-gray-600">Status</span>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                {% if negotiation.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                {% elif negotiation.status == 'active' %}bg-blue-100 text-blue-800
+                                {% if negotiation.status == 'pending' %}bg-orange-100 text-orange-800
+                                {% elif negotiation.status == 'ongoing' %}bg-yellow-100 text-yellow-800
                                 {% elif negotiation.status == 'accepted' %}bg-green-100 text-green-800
                                 {% elif negotiation.status == 'rejected' %}bg-red-100 text-red-800
                                 {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ negotiation.status.title() }}
+                                {% if negotiation.status == 'pending' %}Pending Response{% else %}{{ negotiation.status.title() }}{% endif %}
                             </span>
                         </div>
                         
@@ -206,7 +206,7 @@
                 </div>
 
                 <!-- AI Suggestion for Customer -->
-                {% if negotiation.status in ['pending', 'ongoing'] and user_role == 'buyer' %}
+                {% if negotiation.status == 'ongoing' and user_role == 'buyer' %}
                 <div class="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
                     <div class="flex items-center mb-4">
                         <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,19 +268,26 @@
                             </a>
                         </div>
                     </div>
-                {% elif negotiation.status in ['pending', 'ongoing'] %}
+                {% elif negotiation.status == 'pending' %}
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="text-center py-8">
+                            <div class="inline-flex items-center justify-center w-16 h-16 bg-orange-100 rounded-full mb-4">
+                                <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Waiting for Admin Response</h3>
+                            <p class="text-gray-600 text-sm">
+                                Your offer has been submitted and is being reviewed by our team. You'll be notified when the admin responds.
+                            </p>
+                        </div>
+                    </div>
+                {% elif negotiation.status == 'ongoing' %}
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
                         
                         <div class="space-y-3">
-                            {% if user_role == 'seller' and negotiation.status == 'ongoing' %}
-                                <button id="accept-offer-btn" 
-                                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-medium">
-                                    Accept Latest Offer
-                                </button>
-                            {% endif %}
-                            
-                            {% if user_role == 'buyer' and negotiation.status == 'ongoing' %}
+                            {% if user_role == 'buyer' %}
                                 <button id="make-counter-btn" 
                                         class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium">
                                     Make Counter Offer

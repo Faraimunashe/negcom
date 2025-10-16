@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    <a href="{{ url_for('admin.view_user', user_id=order.user.id) }}" class="text-blue-600 hover:text-blue-900 text-sm">
+                    <a href="{{ url_for('admin.user_detail', user_id=order.user.id) }}" class="text-blue-600 hover:text-blue-900 text-sm">
                         View Customer Profile →
                     </a>
                 </div>
@@ -137,7 +137,7 @@
                     </div>
                 </div>
                 <div class="mt-4">
-                    <a href="{{ url_for('admin.view_vehicle', vehicle_id=order.vehicle.id) }}" class="text-blue-600 hover:text-blue-900 text-sm">
+                    <a href="{{ url_for('admin.vehicle_detail', vehicle_id=order.vehicle.id) }}" class="text-blue-600 hover:text-blue-900 text-sm">
                         View Vehicle Details →
                     </a>
                 </div>
@@ -171,6 +171,41 @@
                 </div>
             </div>
 
+            <!-- Delivery Information -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Delivery Information</h3>
+                {% if delivery %}
+                <div class="space-y-3">
+                    <div>
+                        <span class="text-sm text-gray-600">Delivery Address</span>
+                        <p class="text-sm font-medium text-gray-900 mt-1">{{ delivery.address }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">City</span>
+                        <p class="text-sm font-medium text-gray-900 mt-1">{{ delivery.city }}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">Delivery Status</span>
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full mt-1
+                            {% if delivery.status == 'delivered' %}bg-green-100 text-green-800
+                            {% elif delivery.status == 'in_transit' %}bg-blue-100 text-blue-800
+                            {% elif delivery.status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ delivery.status.replace('_', ' ').title() }}
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-500">No delivery information available</p>
+                </div>
+                {% endif %}
+            </div>
+            
             <!-- Payment Information -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
@@ -186,23 +221,26 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600">Payment Method</span>
-                        <span class="text-sm font-medium text-gray-900">{{ payment.payment_method.title() }}</span>
+                        <span class="text-sm font-medium text-gray-900">{{ payment.method.replace('_', ' ').title() }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-sm text-gray-600">Status</span>
                         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                            {% if payment.status == 'completed' %}bg-green-100 text-green-800
+                            {% if payment.status == 'success' %}bg-green-100 text-green-800
                             {% elif payment.status == 'pending' %}bg-yellow-100 text-yellow-800
                             {% elif payment.status == 'failed' %}bg-red-100 text-red-800
-                            {% elif payment.status == 'cancelled' %}bg-gray-100 text-gray-800
                             {% else %}bg-gray-100 text-gray-800{% endif %}">
                             {{ payment.status.title() }}
                         </span>
                     </div>
-                    {% if payment.completed_at %}
                     <div class="flex justify-between">
-                        <span class="text-sm text-gray-600">Completed At</span>
-                        <span class="text-sm font-medium text-gray-900">{{ payment.completed_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+                        <span class="text-sm text-gray-600">Payment Date</span>
+                        <span class="text-sm font-medium text-gray-900">{{ payment.created_at.strftime('%b %d, %Y %I:%M %p') }}</span>
+                    </div>
+                    {% if payment.status == 'success' and payment.updated_at != payment.created_at %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Last Updated</span>
+                        <span class="text-sm font-medium text-gray-900">{{ payment.updated_at.strftime('%b %d, %Y %I:%M %p') }}</span>
                     </div>
                     {% endif %}
                 </div>
@@ -246,8 +284,8 @@
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-900">Payment Received</p>
                             <p class="text-xs text-gray-500">
-                                {% if payment and payment.completed_at %}
-                                    {{ payment.completed_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                {% if payment %}
+                                    {{ payment.created_at.strftime('%b %d, %Y at %I:%M %p') }}
                                 {% else %}
                                     Payment completed
                                 {% endif %}

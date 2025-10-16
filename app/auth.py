@@ -11,6 +11,9 @@ auth_bp = Blueprint('auth', __name__)
 def index():
     """Home page - redirect to login or dashboard based on auth status"""
     if current_user.is_authenticated:
+        # Redirect based on user role
+        if current_user.role == 1:  # Admin
+            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('dashboard.dashboard'))
     return redirect(url_for('auth.login'))
 
@@ -18,6 +21,9 @@ def index():
 def login():
     """User login page"""
     if current_user.is_authenticated:
+        # Redirect authenticated users based on role
+        if current_user.role == 1:  # Admin
+            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('dashboard.dashboard'))
     
     form = LoginForm()
@@ -36,11 +42,16 @@ def login():
             
             flash(f'Welcome back, {user.name}!', 'success')
             
-            # Redirect to next page if specified, otherwise dashboard
+            # Redirect to next page if specified
             next_page = request.args.get('next')
             if next_page:
                 return redirect(next_page)
-            return redirect(url_for('dashboard.dashboard'))
+            
+            # Redirect based on user role
+            if user.role == 1:  # Admin
+                return redirect(url_for('admin.dashboard'))
+            else:  # Regular user
+                return redirect(url_for('dashboard.dashboard'))
         else:
             flash('Invalid email or password. Please try again.', 'error')
 
@@ -50,6 +61,9 @@ def login():
 def register():
     """User registration page"""
     if current_user.is_authenticated:
+        # Redirect based on user role
+        if current_user.role == 1:  # Admin
+            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('dashboard.dashboard'))
     
     form = RegistrationForm()

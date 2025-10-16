@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from sqlalchemy import and_, or_, desc, asc
 from app import db
-from app.models import Vehicle, Negotiation, NegotiationOffer, User, VehicleImage, OfferByEnum
+from app.models import Vehicle, Negotiation, NegotiationOffer, User, VehicleImage, OfferByEnum, VehicleLocation, VehicleCondition
 from app.forms import NegotiationForm, ContactSellerForm
 from app.ml_negotiation import ml_engine
 from app.notification_service import NotificationService
@@ -51,7 +51,7 @@ def create(vehicle_id):
         and_(
             Negotiation.vehicle_id == vehicle_id,
             Negotiation.user_id == current_user.id,
-            Negotiation.status.in_(['ongoing', 'pending'])
+            Negotiation.status.in_(['pending', 'ongoing'])
         )
     ).first()
     
@@ -67,7 +67,7 @@ def create(vehicle_id):
             negotiation = Negotiation(
                 user_id=current_user.id,
                 vehicle_id=vehicle_id,
-                status='ongoing'
+                status='pending'  # Waiting for admin response
             )
             db.session.add(negotiation)
             db.session.flush()  # Get the ID
@@ -80,67 +80,52 @@ def create(vehicle_id):
                 reason=form.message.data or ''
             )
             db.session.add(offer)
-            db.session.flush()  # Get the offer ID
-            
-            # Generate AI response to the customer offer
-            ai_response = ml_engine.generate_ai_counter_offer(
-                current_user.id, vehicle_id, float(form.offer_amount.data)
-            )
-            
-            if ai_response and ai_response['type'] in ['accept', 'counter', 'suggest']:
-                # Create AI response offer
-                ai_offer = NegotiationOffer(
-                    negotiation_id=negotiation.id,
-                    offer_by=OfferByEnum.AI,
-                    offer_price=ai_response['price'],
-                    reason=ai_response['message']
-                )
-                db.session.add(ai_offer)
-                
-                # Update negotiation status based on AI response
-                if ai_response['type'] == 'accept':
-                    negotiation.status = 'accepted'
-                    negotiation.final_price = ai_response['price']
-                else:
-                    negotiation.status = 'ongoing'
             
             db.session.commit()
             
-            # Create notification for negotiation creation
-            if ai_response and ai_response['type'] == 'accept':
+            # Create notification for user
+            NotificationService.create_notification(
+                user_id=current_user.id,
+                title="Negotiation Submitted",
+                message=f"Your offer of ${form.offer_amount.data:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been submitted. Waiting for admin response.",
+                type="info",
+                category="negotiation",
+                action_url=url_for('negotiations.detail', negotiation_id=negotiation.id),
+                related_id=negotiation.id,
+                related_type="negotiation"
+            )
+            
+            # Notify all admins about new negotiation
+            admins = User.query.filter_by(role=1).all()
+            for admin in admins:
                 NotificationService.create_notification(
-                    user_id=current_user.id,
-                    title="Negotiation Accepted!",
-                    message=f"Congratulations! Your offer of ${form.offer_amount.data:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been accepted!",
-                    type="success",
-                    category="negotiation",
-                    action_url=url_for('negotiations.detail', negotiation_id=negotiation.id),
-                    related_id=negotiation.id,
-                    related_type="negotiation"
-                )
-                flash('Congratulations! Your offer has been accepted!', 'success')
-            else:
-                NotificationService.create_notification(
-                    user_id=current_user.id,
-                    title="Negotiation Started",
-                    message=f"Your negotiation for {vehicle.year} {vehicle.make} {vehicle.model} has started. AI has responded with a counter offer.",
+                    user_id=admin.id,
+                    title="New Negotiation Received",
+                    message=f"{current_user.name} made an offer of ${form.offer_amount.data:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model}",
                     type="info",
                     category="negotiation",
-                    action_url=url_for('negotiations.detail', negotiation_id=negotiation.id),
+                    action_url=url_for('admin.negotiation_detail', negotiation_id=negotiation.id),
                     related_id=negotiation.id,
                     related_type="negotiation"
                 )
-                flash('Your negotiation offer has been sent! AI has responded with a counter offer.', 'success')
             
+            flash('Your offer has been submitted! An admin will respond shortly.', 'success')
             return redirect(url_for('negotiations.detail', negotiation_id=negotiation.id))
             
         except Exception as e:
             db.session.rollback()
             flash('An error occurred while creating the negotiation. Please try again.', 'error')
     
+    # Get vehicle images, location, and condition
+    vehicle.images = VehicleImage.query.filter_by(vehicle_id=vehicle_id).all()
+    vehicle_location = VehicleLocation.query.filter_by(vehicle_id=vehicle_id).first()
+    vehicle_condition = VehicleCondition.query.filter_by(vehicle_id=vehicle_id).first()
+    
     return render_template('negotiations/create.html', 
                          vehicle=vehicle, 
-                         form=form)
+                         form=form,
+                         vehicle_location=vehicle_location,
+                         vehicle_condition=vehicle_condition)
 
 @negotiations_bp.route('/<int:negotiation_id>')
 @login_required
@@ -206,37 +191,30 @@ def make_offer(negotiation_id):
             reason=message
         )
         db.session.add(offer)
-        db.session.flush()  # Get the offer ID
         
-        # Generate AI response to the counter offer
-        ai_response = ml_engine.generate_ai_counter_offer(
-            current_user.id, negotiation.vehicle_id, amount
-        )
-        
-        if ai_response and ai_response['type'] in ['accept', 'counter', 'suggest']:
-            # Create AI response offer
-            ai_offer = NegotiationOffer(
-                negotiation_id=negotiation_id,
-                offer_by=OfferByEnum.AI,
-                offer_price=ai_response['price'],
-                reason=ai_response['message']
-            )
-            db.session.add(ai_offer)
-            
-            # Update negotiation status based on AI response
-            if ai_response['type'] == 'accept':
-                negotiation.status = 'accepted'
-                negotiation.final_price = ai_response['price']
-            else:
-                negotiation.status = 'ongoing'
-        else:
-            negotiation.status = 'ongoing'
+        # Set negotiation to ongoing (waiting for admin response)
+        negotiation.status = 'ongoing'
+        negotiation.updated_at = datetime.utcnow()
         
         db.session.commit()
         
+        # Notify admins about new offer
+        admins = User.query.filter_by(role=1).all()
+        for admin in admins:
+            NotificationService.create_notification(
+                user_id=admin.id,
+                title="New Offer in Negotiation",
+                message=f"{current_user.name} made a new offer of ${amount:,.2f} in negotiation #{negotiation_id}",
+                type="info",
+                category="negotiation",
+                action_url=url_for('admin.negotiation_detail', negotiation_id=negotiation_id),
+                related_id=negotiation_id,
+                related_type="negotiation"
+            )
+        
         return jsonify({
             'success': True,
-            'message': 'Offer submitted successfully',
+            'message': 'Offer submitted successfully. Waiting for admin response.',
             'offer': {
                 'id': offer.id,
                 'amount': float(offer.offer_price),
@@ -344,62 +322,43 @@ def counter_offer(negotiation_id):
             reason=message
         )
         db.session.add(offer)
-        db.session.flush()  # Get the offer ID
         
-        # Generate AI response to the counter offer
-        ai_response = ml_engine.generate_ai_counter_offer(
-            current_user.id, negotiation.vehicle_id, amount
-        )
-        
-        if ai_response and ai_response['type'] in ['accept', 'counter', 'suggest']:
-            # Create AI response offer
-            ai_offer = NegotiationOffer(
-                negotiation_id=negotiation_id,
-                offer_by=OfferByEnum.AI,
-                offer_price=ai_response['price'],
-                reason=ai_response['message']
-            )
-            db.session.add(ai_offer)
-            
-            # Update negotiation status based on AI response
-            if ai_response['type'] == 'accept':
-                negotiation.status = 'accepted'
-                negotiation.final_price = ai_response['price']
-            else:
-                negotiation.status = 'ongoing'
-        else:
-            negotiation.status = 'ongoing'
+        # Set negotiation to ongoing (waiting for admin response)
+        negotiation.status = 'ongoing'
+        negotiation.updated_at = datetime.utcnow()
         
         db.session.commit()
         
-        # Create notification for counter offer
+        # Notify user about their counter offer
         vehicle = Vehicle.query.get(negotiation.vehicle_id)
-        if ai_response and ai_response['type'] == 'accept':
+        NotificationService.create_notification(
+            user_id=current_user.id,
+            title="Counter Offer Submitted",
+            message=f"Your counter offer of ${amount:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been submitted. Waiting for admin response.",
+            type="info",
+            category="negotiation",
+            action_url=url_for('negotiations.detail', negotiation_id=negotiation.id),
+            related_id=negotiation.id,
+            related_type="negotiation"
+        )
+        
+        # Notify admins about counter offer
+        admins = User.query.filter_by(role=1).all()
+        for admin in admins:
             NotificationService.create_notification(
-                user_id=current_user.id,
-                title="Counter Offer Accepted!",
-                message=f"Your counter offer of ${amount:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been accepted!",
-                type="success",
-                category="negotiation",
-                action_url=url_for('negotiations.detail', negotiation_id=negotiation.id),
-                related_id=negotiation.id,
-                related_type="negotiation"
-            )
-        else:
-            NotificationService.create_notification(
-                user_id=current_user.id,
-                title="Counter Offer Made",
-                message=f"Your counter offer of ${amount:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been submitted. AI has responded.",
+                user_id=admin.id,
+                title="Counter Offer Received",
+                message=f"{current_user.name} made a counter offer of ${amount:,.2f} in negotiation #{negotiation_id}",
                 type="info",
                 category="negotiation",
-                action_url=url_for('negotiations.detail', negotiation_id=negotiation.id),
-                related_id=negotiation.id,
+                action_url=url_for('admin.negotiation_detail', negotiation_id=negotiation_id),
+                related_id=negotiation_id,
                 related_type="negotiation"
             )
         
         return jsonify({
             'success': True,
-            'message': 'Counter offer submitted successfully',
+            'message': 'Counter offer submitted successfully. Waiting for admin response.',
             'offer': {
                 'id': offer.id,
                 'amount': float(offer.offer_price),

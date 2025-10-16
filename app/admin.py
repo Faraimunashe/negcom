@@ -1,9 +1,9 @@
 # Admin Blueprint
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
-from app.models import User, Vehicle, VehicleImage, Order, Payment, Negotiation, NegotiationOffer, Category, VehicleCategory, Review
+from app.models import User, Vehicle, VehicleImage, Order, Payment, Negotiation, NegotiationOffer, Category, VehicleCategory, Review, VehicleLocation, VehicleCondition, OfferByEnum, OrderDelivery
 from app import db
-from sqlalchemy import func, desc, and_
+from sqlalchemy import func, desc, and_, case
 from datetime import datetime, timedelta
 import json
 import os
@@ -147,12 +147,16 @@ def vehicle_detail(vehicle_id):
     images = VehicleImage.query.filter_by(vehicle_id=vehicle_id).all()
     orders = Order.query.filter_by(vehicle_id=vehicle_id).all()
     negotiations = Negotiation.query.filter_by(vehicle_id=vehicle_id).all()
+    vehicle_location = VehicleLocation.query.filter_by(vehicle_id=vehicle_id).first()
+    vehicle_condition = VehicleCondition.query.filter_by(vehicle_id=vehicle_id).first()
     
     return render_template('admin/vehicles/detail.html',
                          vehicle=vehicle,
                          images=images,
                          orders=orders,
-                         negotiations=negotiations)
+                         negotiations=negotiations,
+                         vehicle_location=vehicle_location,
+                         vehicle_condition=vehicle_condition)
 
 @admin_bp.route('/vehicles/<int:vehicle_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -161,7 +165,19 @@ def edit_vehicle(vehicle_id):
     """Edit vehicle details"""
     from app.forms import AdminVehicleEditForm
     vehicle = Vehicle.query.get_or_404(vehicle_id)
+    
+    # Get existing location and condition for form defaults
+    vehicle_location = VehicleLocation.query.filter_by(vehicle_id=vehicle_id).first()
+    vehicle_condition = VehicleCondition.query.filter_by(vehicle_id=vehicle_id).first()
+    
     form = AdminVehicleEditForm(obj=vehicle)
+    
+    # Set form defaults for location and condition if they exist
+    if request.method == 'GET':
+        if vehicle_location:
+            form.city.data = vehicle_location.city
+        if vehicle_condition:
+            form.condition.data = vehicle_condition.description
     
     if form.validate_on_submit():
         try:
@@ -175,6 +191,26 @@ def edit_vehicle(vehicle_id):
             vehicle.body_type = form.body_type.data
             vehicle.color = form.color.data
             vehicle.price = form.price.data
+            
+            # Update or create vehicle location
+            if vehicle_location:
+                vehicle_location.city = form.city.data
+            else:
+                vehicle_location = VehicleLocation(
+                    vehicle_id=vehicle_id,
+                    city=form.city.data
+                )
+                db.session.add(vehicle_location)
+            
+            # Update or create vehicle condition
+            if vehicle_condition:
+                vehicle_condition.description = form.condition.data
+            else:
+                vehicle_condition = VehicleCondition(
+                    vehicle_id=vehicle_id,
+                    description=form.condition.data
+                )
+                db.session.add(vehicle_condition)
             
             # Handle additional images if uploaded
             if form.additional_images.data and form.additional_images.data[0].filename:
@@ -286,6 +322,20 @@ def create_vehicle():
             db.session.add(new_vehicle)
             db.session.flush()  # Get the vehicle ID without committing
             
+            # Create vehicle location
+            vehicle_location = VehicleLocation(
+                vehicle_id=new_vehicle.id,
+                city=form.city.data
+            )
+            db.session.add(vehicle_location)
+            
+            # Create vehicle condition
+            vehicle_condition = VehicleCondition(
+                vehicle_id=new_vehicle.id,
+                description=form.condition.data
+            )
+            db.session.add(vehicle_condition)
+            
             # Save uploaded images
             if form.images.data:
                 saved_images = save_vehicle_images(new_vehicle.id, form.images.data)
@@ -329,7 +379,22 @@ def users():
         page=page, per_page=20, error_out=False
     )
     
-    return render_template('admin/users/list.html', users=users, search=search, role_filter=role_filter)
+    # Calculate statistics
+    total_users = User.query.count()
+    admin_users = User.query.filter_by(role=1).count()
+    regular_users = User.query.filter_by(role=2).count()
+    
+    # For now, consider all users as active (since we don't have is_active field)
+    active_users = total_users
+    
+    return render_template('admin/users/list.html', 
+                         users=users, 
+                         search_query=search, 
+                         role_filter=role_filter,
+                         total_users=total_users,
+                         admin_users=admin_users,
+                         regular_users=regular_users,
+                         active_users=active_users)
 
 @admin_bp.route('/users/<int:user_id>')
 @login_required
@@ -366,6 +431,46 @@ def user_detail(user_id):
                          successful_negotiations=successful_negotiations,
                          recent_orders=recent_orders,
                          recent_negotiations=recent_negotiations)
+
+@admin_bp.route('/users/create', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def create_user():
+    """Create a new user from admin"""
+    from app.forms import AdminUserCreateForm
+    from passlib.hash import sha256_crypt
+    
+    form = AdminUserCreateForm()
+    
+    if form.validate_on_submit():
+        try:
+            # Check if email already exists
+            existing_user = User.query.filter_by(email=form.email.data).first()
+            if existing_user:
+                flash('Email address is already in use!', 'error')
+                return render_template('admin/users/create.html', form=form)
+            
+            # Hash the password
+            hashed_password = sha256_crypt.hash(form.password.data)
+            
+            # Create new user
+            new_user = User(
+                name=form.name.data,
+                email=form.email.data,
+                password=hashed_password,
+                role=form.role.data
+            )
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            flash(f'User {new_user.name} created successfully!', 'success')
+            return redirect(url_for('admin.user_detail', user_id=new_user.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating user: {str(e)}', 'error')
+    
+    return render_template('admin/users/create.html', form=form)
 
 @admin_bp.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -532,12 +637,14 @@ def order_detail(order_id):
     """Admin order detail view"""
     order = Order.query.get_or_404(order_id)
     payment = Payment.query.filter_by(order_id=order_id).first()
+    delivery = OrderDelivery.query.filter_by(order_id=order_id).first()
     user = User.query.get(order.user_id)
     vehicle = Vehicle.query.get(order.vehicle_id)
     
     return render_template('admin/orders/detail.html',
                          order=order,
                          payment=payment,
+                         delivery=delivery,
                          user=user,
                          vehicle=vehicle)
 
@@ -549,12 +656,62 @@ def update_order_status(order_id):
     order = Order.query.get_or_404(order_id)
     new_status = request.form.get('status')
     
-    if new_status in ['pending', 'paid', 'failed', 'refunded']:
+    if new_status in ['pending', 'paid', 'shipped', 'delivered', 'cancelled', 'failed', 'refunded']:
+        old_status = order.status
         order.status = new_status
         db.session.commit()
+        
+        # Send notification to customer
+        from app.notification_service import NotificationService
+        NotificationService.create_notification(
+            user_id=order.user_id,
+            title=f"Order Status Updated",
+            message=f"Your order #{order.id} status has been updated from {old_status} to {new_status}.",
+            type="info",
+            category="order",
+            action_url=url_for('orders.detail', order_id=order.id),
+            related_id=order.id,
+            related_type="order"
+        )
+        
         flash(f'Order status updated to {new_status}!', 'success')
     else:
         flash('Invalid status!', 'error')
+    
+    return redirect(url_for('admin.order_detail', order_id=order_id))
+
+@admin_bp.route('/orders/<int:order_id>/cancel', methods=['POST'])
+@login_required
+@admin_required
+def cancel_order(order_id):
+    """Cancel an order"""
+    order = Order.query.get_or_404(order_id)
+    
+    if order.status in ['delivered', 'cancelled']:
+        flash('This order cannot be cancelled.', 'error')
+        return redirect(url_for('admin.order_detail', order_id=order_id))
+    
+    try:
+        order.status = 'cancelled'
+        db.session.commit()
+        
+        # Send notification to customer
+        from app.notification_service import NotificationService
+        NotificationService.create_notification(
+            user_id=order.user_id,
+            title="Order Cancelled",
+            message=f"Your order #{order.id} has been cancelled by the administrator.",
+            type="warning",
+            category="order",
+            action_url=url_for('orders.detail', order_id=order.id),
+            related_id=order.id,
+            related_type="order"
+        )
+        
+        flash('Order cancelled successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error cancelling order: {str(e)}', 'error')
     
     return redirect(url_for('admin.order_detail', order_id=order_id))
 
@@ -620,13 +777,15 @@ def negotiations():
     
     # Calculate statistics for the template
     total_negotiations = Negotiation.query.count()
-    active_negotiations = Negotiation.query.filter(Negotiation.status == 'ongoing').count()
-    successful_negotiations = Negotiation.query.filter(Negotiation.status == 'accepted').count()
+    pending_negotiations = Negotiation.query.filter(Negotiation.status == 'pending').count()
+    ongoing_negotiations = Negotiation.query.filter(Negotiation.status == 'ongoing').count()
+    accepted_negotiations = Negotiation.query.filter(Negotiation.status == 'accepted').count()
     
-    # Calculate average negotiation value (from associated orders)
-    avg_negotiation_value = db.session.query(func.avg(Order.price)).join(
-        Negotiation, Order.vehicle_id == Negotiation.vehicle_id
-    ).filter(Negotiation.status == 'accepted').scalar() or 0
+    # Calculate average negotiation value (from final prices)
+    avg_negotiation_value = db.session.query(func.avg(Negotiation.final_price)).filter(
+        Negotiation.status == 'accepted',
+        Negotiation.final_price.isnot(None)
+    ).scalar() or 0
     
     return render_template('admin/negotiations/list.html', 
                          negotiations=negotiations, 
@@ -637,8 +796,9 @@ def negotiations():
                          sort_by=sort_by,
                          sort_order=sort_order,
                          total_negotiations=total_negotiations,
-                         active_negotiations=active_negotiations,
-                         successful_negotiations=successful_negotiations,
+                         pending_negotiations=pending_negotiations,
+                         ongoing_negotiations=ongoing_negotiations,
+                         accepted_negotiations=accepted_negotiations,
                          avg_negotiation_value=float(avg_negotiation_value))
 
 @admin_bp.route('/negotiations/<int:negotiation_id>')
@@ -661,7 +821,13 @@ def negotiation_detail(negotiation_id):
 @login_required
 @admin_required
 def reports():
-    """Admin reports and analytics"""
+    """Admin reports and analytics dashboard"""
+    
+    # Calculate key statistics
+    total_revenue = db.session.query(func.sum(Order.price)).filter(Order.status == 'paid').scalar() or 0
+    total_orders = db.session.query(func.count(Order.id)).filter(Order.status == 'paid').scalar() or 0
+    total_users = User.query.count()
+    avg_order_value = (total_revenue / total_orders) if total_orders > 0 else 0
     
     # Monthly revenue
     monthly_revenue = db.session.query(
@@ -694,6 +860,10 @@ def reports():
     ).order_by('date').all()
     
     return render_template('admin/reports/dashboard.html',
+                         total_revenue=float(total_revenue),
+                         total_orders=total_orders,
+                         total_users=total_users,
+                         avg_order_value=float(avg_order_value),
                          monthly_revenue=monthly_revenue,
                          vehicle_performance=vehicle_performance,
                          user_activity=user_activity)
@@ -704,13 +874,32 @@ def reports():
 def user_analytics():
     """User analytics and reports"""
     
-    # User registration trends
-    user_activity = db.session.query(
-        func.date(User.created_at).label('date'),
-        func.count(User.id).label('new_users')
-    ).filter(User.created_at >= datetime.utcnow() - timedelta(days=90)).group_by(
-        func.date(User.created_at)
-    ).order_by('date').all()
+    # User registration trends - Get all users from last 90 days
+    ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+    users_last_90_days = User.query.filter(User.created_at >= ninety_days_ago).all()
+    
+    # Group by date
+    from collections import defaultdict
+    activity_dict = defaultdict(int)
+    for user in users_last_90_days:
+        date_key = user.created_at.date()
+        activity_dict[date_key] += 1
+    
+    # Convert to list of dicts with proper formatting
+    user_activity = []
+    for date_key in sorted(activity_dict.keys()):
+        user_activity.append({
+            'date': date_key.strftime('%m/%d'),
+            'date_full': date_key.strftime('%Y-%m-%d'),
+            'new_users': activity_dict[date_key]
+        })
+    
+    # Calculate new users this month
+    start_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    new_users_this_month = User.query.filter(User.created_at >= start_of_month).count()
+    
+    # Total users count
+    total_users = User.query.count()
     
     # User role distribution
     role_distribution = db.session.query(
@@ -738,7 +927,9 @@ def user_analytics():
                          user_activity=user_activity,
                          role_distribution=role_distribution,
                          top_active_users=top_active_users,
-                         recent_users=recent_users)
+                         recent_users=recent_users,
+                         new_users_this_month=new_users_this_month,
+                         total_users=total_users)
 
 @admin_bp.route('/negotiations/analytics')
 @login_required
@@ -751,7 +942,7 @@ def negotiation_analytics():
         func.extract('year', Negotiation.created_at).label('year'),
         func.extract('month', Negotiation.created_at).label('month'),
         func.count(Negotiation.id).label('total'),
-        func.sum(func.case([(Negotiation.status == 'accepted', 1)], else_=0)).label('accepted')
+        func.sum(case((Negotiation.status == 'accepted', 1), else_=0)).label('accepted')
     ).group_by(
         func.extract('year', Negotiation.created_at),
         func.extract('month', Negotiation.created_at)
@@ -787,7 +978,7 @@ def negotiation_analytics():
         Vehicle.make,
         Vehicle.model,
         func.count(Negotiation.id).label('negotiations'),
-        func.sum(func.case([(Negotiation.status == 'accepted', 1)], else_=0)).label('accepted')
+        func.sum(case((Negotiation.status == 'accepted', 1), else_=0)).label('accepted')
     ).join(Negotiation, Vehicle.id == Negotiation.vehicle_id).group_by(
         Vehicle.make, Vehicle.model
     ).order_by(desc('negotiations')).limit(10).all()
@@ -796,7 +987,7 @@ def negotiation_analytics():
     top_users = db.session.query(
         User.name,
         func.count(Negotiation.id).label('negotiations'),
-        func.sum(func.case([(Negotiation.status == 'accepted', 1)], else_=0)).label('accepted')
+        func.sum(case((Negotiation.status == 'accepted', 1), else_=0)).label('accepted')
     ).join(Negotiation, User.id == Negotiation.user_id).group_by(
         User.id, User.name
     ).order_by(desc('negotiations')).limit(10).all()
@@ -987,7 +1178,7 @@ def update_negotiation_status(negotiation_id):
     negotiation = Negotiation.query.get_or_404(negotiation_id)
     
     new_status = request.form.get('status')
-    if new_status not in ['ongoing', 'accepted', 'rejected', 'expired']:
+    if new_status not in ['pending', 'ongoing', 'accepted', 'rejected', 'expired', 'cancelled']:
         flash('Invalid status!', 'error')
         return redirect(url_for('admin.negotiation_detail', negotiation_id=negotiation_id))
     
@@ -1020,6 +1211,7 @@ def accept_negotiation_offer(negotiation_id, offer_id):
     """Accept a specific negotiation offer"""
     negotiation = Negotiation.query.get_or_404(negotiation_id)
     offer = NegotiationOffer.query.get_or_404(offer_id)
+    vehicle = Vehicle.query.get(negotiation.vehicle_id)
     
     if offer.negotiation_id != negotiation_id:
         flash('Invalid offer for this negotiation!', 'error')
@@ -1031,11 +1223,25 @@ def accept_negotiation_offer(negotiation_id, offer_id):
         negotiation.updated_at = datetime.utcnow()
         
         db.session.commit()
+        
+        # Notify the customer about acceptance
+        from app.notification_service import NotificationService
+        NotificationService.create_notification(
+            user_id=negotiation.user_id,
+            title="Offer Accepted!",
+            message=f"Congratulations! Your offer of ${offer.offer_price:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been accepted!",
+            type="success",
+            category="negotiation",
+            action_url=url_for('negotiations.detail', negotiation_id=negotiation_id),
+            related_id=negotiation_id,
+            related_type="negotiation"
+        )
+        
         flash(f'Offer of ${offer.offer_price:,.2f} accepted successfully!', 'success')
         
     except Exception as e:
         db.session.rollback()
-        flash('An error occurred while accepting the offer.', 'error')
+        flash(f'An error occurred while accepting the offer: {str(e)}', 'error')
     
     return redirect(url_for('admin.negotiation_detail', negotiation_id=negotiation_id))
 
@@ -1046,41 +1252,36 @@ def reject_negotiation_offer(negotiation_id, offer_id):
     """Reject a specific negotiation offer"""
     negotiation = Negotiation.query.get_or_404(negotiation_id)
     offer = NegotiationOffer.query.get_or_404(offer_id)
+    vehicle = Vehicle.query.get(negotiation.vehicle_id)
     
     if offer.negotiation_id != negotiation_id:
         flash('Invalid offer for this negotiation!', 'error')
         return redirect(url_for('admin.negotiation_detail', negotiation_id=negotiation_id))
     
     try:
-        # Create AI counter offer
-        ai_response = ml_engine.generate_ai_counter_offer(
-            negotiation.user_id, negotiation.vehicle_id, float(offer.offer_price)
-        )
-        
-        if ai_response and ai_response['type'] in ['counter', 'suggest']:
-            # Create AI counter offer
-            ai_offer = NegotiationOffer(
-                negotiation_id=negotiation_id,
-                offer_by=OfferByEnum.AI,
-                offer_price=ai_response['price'],
-                reason=f"Counter offer: {ai_response['message']}"
-            )
-            db.session.add(ai_offer)
-            negotiation.status = 'ongoing'
-        else:
-            negotiation.status = 'rejected'
-        
+        negotiation.status = 'rejected'
         negotiation.updated_at = datetime.utcnow()
+        
         db.session.commit()
         
-        if ai_response and ai_response['type'] in ['counter', 'suggest']:
-            flash(f'Offer rejected. AI counter offer of ${ai_response["price"]:,.2f} made.', 'info')
-        else:
-            flash('Offer rejected successfully.', 'success')
+        # Notify the customer about rejection
+        from app.notification_service import NotificationService
+        NotificationService.create_notification(
+            user_id=negotiation.user_id,
+            title="Offer Rejected",
+            message=f"Unfortunately, your offer of ${offer.offer_price:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model} has been rejected.",
+            type="warning",
+            category="negotiation",
+            action_url=url_for('negotiations.detail', negotiation_id=negotiation_id),
+            related_id=negotiation_id,
+            related_type="negotiation"
+        )
+        
+        flash('Offer rejected successfully.', 'success')
         
     except Exception as e:
         db.session.rollback()
-        flash('An error occurred while rejecting the offer.', 'error')
+        flash(f'An error occurred while rejecting the offer: {str(e)}', 'error')
     
     return redirect(url_for('admin.negotiation_detail', negotiation_id=negotiation_id))
 
@@ -1090,6 +1291,7 @@ def reject_negotiation_offer(negotiation_id, offer_id):
 def make_negotiation_offer(negotiation_id):
     """Make a counter offer as admin"""
     negotiation = Negotiation.query.get_or_404(negotiation_id)
+    vehicle = Vehicle.query.get(negotiation.vehicle_id)
     
     offer_price = request.form.get('offer_price', type=float)
     reason = request.form.get('reason', '')
@@ -1112,10 +1314,24 @@ def make_negotiation_offer(negotiation_id):
         negotiation.updated_at = datetime.utcnow()
         
         db.session.commit()
+        
+        # Notify the customer about the counter offer
+        from app.notification_service import NotificationService
+        NotificationService.create_notification(
+            user_id=negotiation.user_id,
+            title="Counter Offer Received",
+            message=f"Admin has responded with a counter offer of ${offer_price:,.2f} for {vehicle.year} {vehicle.make} {vehicle.model}",
+            type="info",
+            category="negotiation",
+            action_url=url_for('negotiations.detail', negotiation_id=negotiation_id),
+            related_id=negotiation_id,
+            related_type="negotiation"
+        )
+        
         flash(f'Counter offer of ${offer_price:,.2f} made successfully!', 'success')
         
     except Exception as e:
         db.session.rollback()
-        flash('An error occurred while making the counter offer.', 'error')
+        flash(f'An error occurred while making the counter offer: {str(e)}', 'error')
     
     return redirect(url_for('admin.negotiation_detail', negotiation_id=negotiation_id))

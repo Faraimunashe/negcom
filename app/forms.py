@@ -224,6 +224,17 @@ class AdminVehicleForm(FlaskForm):
     price = DecimalField('Price ($)', validators=[DataRequired(), NumberRange(min=0.01)],
                         render_kw={"placeholder": "e.g., 25000.00", "step": "0.01",
                                   "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    city = StringField('Location (City)', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "e.g., Harare, Bulawayo",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    condition = SelectField('Condition', choices=[
+        ('new', 'New'),
+        ('used-excellent', 'Used - Excellent'),
+        ('used-good', 'Used - Good'),
+        ('used-fair', 'Used - Fair'),
+        ('damaged', 'Damaged')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
     images = MultipleFileField('Vehicle Images', validators=[
         FileRequired(message='At least one image is required'),
         FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files (JPG, PNG, GIF) are allowed!')
@@ -276,6 +287,17 @@ class AdminVehicleEditForm(FlaskForm):
     price = DecimalField('Price ($)', validators=[DataRequired(), NumberRange(min=0.01)],
                         render_kw={"placeholder": "e.g., 25000.00", "step": "0.01",
                                   "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    city = StringField('Location (City)', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "e.g., Harare, Bulawayo",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    condition = SelectField('Condition', choices=[
+        ('new', 'New'),
+        ('used-excellent', 'Used - Excellent'),
+        ('used-good', 'Used - Good'),
+        ('used-fair', 'Used - Fair'),
+        ('damaged', 'Damaged')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
     additional_images = MultipleFileField('Additional Images (Optional)', validators=[
         FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Only image files (JPG, PNG, GIF) are allowed!')
     ], render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent", "multiple": True, "accept": "image/*"})
@@ -294,6 +316,26 @@ class AdminUserForm(FlaskForm):
     ], coerce=int, validators=[DataRequired()],
     render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
     submit = SubmitField('Update User', render_kw={"class": "w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-medium"})
+
+class AdminUserCreateForm(FlaskForm):
+    name = StringField('Full Name', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "Enter full name",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    email = StringField('Email', validators=[DataRequired(), Email()],
+                       render_kw={"placeholder": "Enter email address",
+                                 "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)],
+                            render_kw={"placeholder": "Enter password",
+                                      "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password', message='Passwords must match')],
+                                    render_kw={"placeholder": "Confirm password",
+                                              "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    role = SelectField('Role', choices=[
+        (1, 'Admin'),
+        (2, 'User')
+    ], coerce=int, validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Create User', render_kw={"class": "w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium"})
 
 class AdminOrderForm(FlaskForm):
     status = SelectField('Order Status', choices=[
@@ -342,3 +384,28 @@ class AdminReportForm(FlaskForm):
     ], validators=[DataRequired()],
     render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
     submit = SubmitField('Generate Report', render_kw={"class": "w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 font-medium"})
+
+# Delivery and Rating Forms
+class DeliveryAddressForm(FlaskForm):
+    address = StringField('Delivery Address', validators=[DataRequired(), Length(min=10, max=300)],
+                         render_kw={"placeholder": "Enter full street address",
+                                   "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    city = StringField('City', validators=[DataRequired(), Length(min=2, max=80)],
+                      render_kw={"placeholder": "Enter city",
+                                "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Proceed to Payment', render_kw={"class": "w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 font-medium"})
+
+class OrderRatingForm(FlaskForm):
+    rating = SelectField('Rating', choices=[
+        ('5', '⭐⭐⭐⭐⭐ Excellent'),
+        ('4', '⭐⭐⭐⭐ Good'),
+        ('3', '⭐⭐⭐ Average'),
+        ('2', '⭐⭐ Poor'),
+        ('1', '⭐ Very Poor')
+    ], validators=[DataRequired()],
+    render_kw={"class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    comment = TextAreaField('Comment (Optional)', validators=[Optional(), Length(max=500)],
+                           render_kw={"placeholder": "Share your experience with this order...",
+                                     "rows": 4,
+                                     "class": "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"})
+    submit = SubmitField('Submit Rating', render_kw={"class": "w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 font-medium"})

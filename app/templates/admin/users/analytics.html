@@ -35,7 +35,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-500">Total Users</p>
-                    <p class="text-2xl font-semibold text-gray-900">{{ user_activity|sum(attribute='new_users') or 0 }}</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_users }}</p>
                 </div>
             </div>
         </div>
@@ -50,7 +50,7 @@
                     </div>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500">Active Users</p>
+                    <p class="text-sm font-medium text-gray-500">Most Active</p>
                     <p class="text-2xl font-semibold text-gray-900">{{ top_active_users|length }}</p>
                 </div>
             </div>
@@ -67,10 +67,7 @@
                 </div>
                 <div class="ml-4">
                     <p class="text-sm font-medium text-gray-500">New This Month</p>
-                    <p class="text-2xl font-semibold text-gray-900">
-                        {% set current_month = user_activity|selectattr('date', 'match', '.*' + moment().strftime('%Y-%m') + '.*')|list %}
-                        {{ current_month|sum(attribute='new_users') or 0 }}
-                    </p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ new_users_this_month }}</p>
                 </div>
             </div>
         </div>
@@ -81,13 +78,17 @@
         <!-- User Registration Chart -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">User Registration Trends (Last 90 Days)</h3>
-            <canvas id="userRegistrationChart" width="400" height="200"></canvas>
+            <div style="height: 300px;">
+                <canvas id="userRegistrationChart"></canvas>
+            </div>
         </div>
 
         <!-- Role Distribution Chart -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">User Role Distribution</h3>
-            <canvas id="roleDistributionChart" width="400" height="200"></canvas>
+            <div style="height: 300px;">
+                <canvas id="roleDistributionChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -180,7 +181,7 @@
     const userRegistrationData = {
         labels: [
             {% for day in user_activity %}
-                '{{ day.date.strftime("%m/%d") }}'{% if not loop.last %},{% endif %}
+                '{{ day.date }}'{% if not loop.last %},{% endif %}
             {% endfor %}
         ],
         datasets: [{
@@ -202,16 +203,21 @@
         data: userRegistrationData,
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        stepSize: 1
+                        stepSize: 1,
+                        precision: 0
                     }
                 }
             },
             plugins: {
+                legend: {
+                    display: false
+                },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
@@ -228,7 +234,7 @@
     const roleDistributionData = {
         labels: [
             {% for role_data in role_distribution %}
-                {% if role_data.role == 1 %}Admin{% else %}User{% endif %}{% if not loop.last %},{% endif %}
+                '{% if role_data.role == 1 %}Admin{% else %}User{% endif %}'{% if not loop.last %},{% endif %}
             {% endfor %}
         ],
         datasets: [{
@@ -238,7 +244,7 @@
                 {% endfor %}
             ],
             backgroundColor: [
-                'rgb(239, 68, 68)',
+                'rgb(168, 85, 247)',
                 'rgb(59, 130, 246)'
             ]
         }]
@@ -249,15 +255,24 @@
         data: roleDistributionData,
         options: {
             responsive: true,
-            maintainAspectRatio: false,
+            maintainAspectRatio: true,
+            aspectRatio: 1.5,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 14
+                        }
+                    }
                 },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return context.label + ': ' + context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
                         }
                     }
                 }

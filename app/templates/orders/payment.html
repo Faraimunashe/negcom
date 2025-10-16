@@ -26,18 +26,74 @@
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Payment Information</h2>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">Complete Your Purchase</h2>
                         
                         <form method="POST" id="paymentForm">
-                            {{ form.hidden_tag() }}
+                            {{ payment_form.hidden_tag() }}
+                            {{ delivery_form.hidden_tag() }}
+                            
+                            <!-- Delivery Address Section -->
+                            {% if not existing_delivery %}
+                            <div class="mb-8 pb-6 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Delivery Information</h3>
+                                
+                                <!-- Delivery Address -->
+                                <div class="mb-4">
+                                    <label for="{{ delivery_form.address.id }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Delivery Address *
+                                    </label>
+                                    {{ delivery_form.address(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if delivery_form.address.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in delivery_form.address.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <p class="mt-1 text-sm text-gray-500">Please enter your complete street address</p>
+                                </div>
+                                
+                                <!-- City -->
+                                <div class="mb-4">
+                                    <label for="{{ delivery_form.city.id }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        City *
+                                    </label>
+                                    {{ delivery_form.city(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if delivery_form.city.errors %}
+                                        <div class="mt-1 text-sm text-red-600">
+                                            {% for error in delivery_form.city.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="mb-8 pb-6 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Delivery Information</h3>
+                                <div class="bg-gray-50 rounded-lg p-4">
+                                    <div class="space-y-2 text-sm">
+                                        <div>
+                                            <span class="text-gray-600">Address:</span>
+                                            <span class="font-medium text-gray-900 ml-2">{{ existing_delivery.address }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">City:</span>
+                                            <span class="font-medium text-gray-900 ml-2">{{ existing_delivery.city }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                             
                             <!-- Payment Method -->
                             <div class="mb-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                                {{ form.payment_method(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
-                                {% if form.payment_method.errors %}
+                                {{ payment_form.payment_method(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                {% if payment_form.payment_method.errors %}
                                     <div class="mt-1 text-sm text-red-600">
-                                        {% for error in form.payment_method.errors %}
+                                        {% for error in payment_form.payment_method.errors %}
                                             <p>{{ error }}</p>
                                         {% endfor %}
                                     </div>
@@ -49,10 +105,10 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">Card Number</label>
-                                        {{ form.card_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
-                                        {% if form.card_number.errors %}
+                                        {{ payment_form.card_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                        {% if payment_form.card_number.errors %}
                                             <div class="mt-1 text-sm text-red-600">
-                                                {% for error in form.card_number.errors %}
+                                                {% for error in payment_form.card_number.errors %}
                                                     <p>{{ error }}</p>
                                                 {% endfor %}
                                             </div>
@@ -60,10 +116,10 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">CVV</label>
-                                        {{ form.cvv(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
-                                        {% if form.cvv.errors %}
+                                        {{ payment_form.cvv(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                        {% if payment_form.cvv.errors %}
                                             <div class="mt-1 text-sm text-red-600">
-                                                {% for error in form.cvv.errors %}
+                                                {% for error in payment_form.cvv.errors %}
                                                     <p>{{ error }}</p>
                                                 {% endfor %}
                                             </div>
@@ -72,10 +128,10 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Date</label>
-                                    {{ form.expiry_date(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
-                                    {% if form.expiry_date.errors %}
+                                    {{ payment_form.expiry_date(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if payment_form.expiry_date.errors %}
                                         <div class="mt-1 text-sm text-red-600">
-                                            {% for error in form.expiry_date.errors %}
+                                            {% for error in payment_form.expiry_date.errors %}
                                                 <p>{{ error }}</p>
                                             {% endfor %}
                                         </div>
@@ -87,10 +143,10 @@
                             <div id="bankTransferFields" class="space-y-4 mb-6" style="display: none;">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
-                                    {{ form.account_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
-                                    {% if form.account_number.errors %}
+                                    {{ payment_form.account_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if payment_form.account_number.errors %}
                                         <div class="mt-1 text-sm text-red-600">
-                                            {% for error in form.account_number.errors %}
+                                            {% for error in payment_form.account_number.errors %}
                                                 <p>{{ error }}</p>
                                             {% endfor %}
                                         </div>
@@ -102,10 +158,10 @@
                             <div id="mobileMoneyFields" class="space-y-4 mb-6" style="display: none;">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
-                                    {{ form.mobile_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
-                                    {% if form.mobile_number.errors %}
+                                    {{ payment_form.mobile_number(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                                    {% if payment_form.mobile_number.errors %}
                                         <div class="mt-1 text-sm text-red-600">
-                                            {% for error in form.mobile_number.errors %}
+                                            {% for error in payment_form.mobile_number.errors %}
                                                 <p>{{ error }}</p>
                                             {% endfor %}
                                         </div>
@@ -122,7 +178,7 @@
                                     </svg>
                                     Back to Order
                                 </a>
-                                {{ form.submit(class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200") }}
+                                {{ payment_form.submit(class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-200") }}
                             </div>
                         </form>
                     </div>
@@ -131,6 +187,27 @@
 
             <!-- Order Summary -->
             <div class="space-y-6">
+                <!-- Vehicle Info -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h3>
+                        
+                        <!-- Vehicle Image -->
+                        {% if images %}
+                        <div class="mb-4 rounded-lg overflow-hidden">
+                            <img src="{{ url_for('static', filename=images[0].image_url) }}" 
+                                 alt="{{ vehicle.make }} {{ vehicle.model }}" 
+                                 class="w-full h-32 object-cover">
+                        </div>
+                        {% endif %}
+                        
+                        <div class="space-y-2">
+                            <h4 class="font-semibold text-gray-900">{{ vehicle.year }} {{ vehicle.make }} {{ vehicle.model }}</h4>
+                            <p class="text-sm text-gray-600">{{ "{:,}".format(vehicle.mileage) }} km • {{ vehicle.engine_type|title }}</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Order Details -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
                     <div class="p-6">
@@ -141,12 +218,8 @@
                                 <span class="font-medium">#{{ order.id }}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-gray-600">Vehicle ID:</span>
-                                <span class="font-medium">#{{ order.vehicle_id }}</span>
-                            </div>
-                            <div class="flex justify-between">
                                 <span class="text-gray-600">Order Date:</span>
-                                <span class="font-medium">{{ order.created_at.strftime('%B %d, %Y') }}</span>
+                                <span class="font-medium">{{ order.created_at.strftime('%b %d, %Y') }}</span>
                             </div>
                             <div class="border-t pt-3">
                                 <div class="flex justify-between text-lg font-semibold">

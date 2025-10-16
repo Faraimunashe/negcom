@@ -250,3 +250,73 @@ class Notification(db.Model):
         self.is_read = False
         self.created_at = datetime.utcnow()
 
+class OrderDelivery(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    status = db.Column(db.String(80), nullable=False)  # pending, in_transit, delivered
+    address = db.Column(db.String(300), nullable=False)
+    city = db.Column(db.String(80), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    order = db.relationship('Order', backref='delivery')
+
+    def __init__(self, order_id, address, city, status='pending'):
+        self.order_id = order_id
+        self.address = address
+        self.city = city
+        self.status = status
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+
+class VehicleLocation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
+    city = db.Column(db.String(80), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    vehicle = db.relationship('Vehicle', backref='location', uselist=False)
+
+    def __init__(self, vehicle_id, city):
+        self.vehicle_id = vehicle_id
+        self.city = city
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+
+class OrderRating(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
+    comment = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    order = db.relationship('Order', backref='rating', uselist=False)
+
+    def __init__(self, order_id, rating, comment=None):
+        self.order_id = order_id
+        self.rating = rating
+        self.comment = comment
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+
+class VehicleCondition(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
+    description = db.Column(db.String(80), nullable=False)  # new, used-excellent, used-good, used-fair, damaged
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    vehicle = db.relationship('Vehicle', backref='condition', uselist=False)
+
+    def __init__(self, vehicle_id, description):
+        self.vehicle_id = vehicle_id
+        self.description = description
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+

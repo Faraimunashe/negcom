@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from flask_login import login_required, current_user
 from sqlalchemy import or_, and_, desc, asc
 from app import db
-from app.models import Vehicle, VehicleImage, Category, VehicleCategory, User
+from app.models import Vehicle, VehicleImage, Category, VehicleCategory, User, VehicleLocation, VehicleCondition
 from app.forms import VehicleSearchForm, VehicleFilterForm
 import os
 
@@ -71,9 +71,11 @@ def browse():
         page=page, per_page=per_page, error_out=False
     )
     
-    # Get images for each vehicle
+    # Get images, location, and condition for each vehicle
     for vehicle in vehicles.items:
         vehicle.images = VehicleImage.query.filter_by(vehicle_id=vehicle.id).all()
+        vehicle.location_data = VehicleLocation.query.filter_by(vehicle_id=vehicle.id).first()
+        vehicle.condition_data = VehicleCondition.query.filter_by(vehicle_id=vehicle.id).first()
     
     # Get categories for filter dropdown
     categories = Category.query.all()
@@ -112,6 +114,10 @@ def detail(vehicle_id):
         VehicleCategory.vehicle_id == vehicle_id
     ).all()
     
+    # Get vehicle location and condition
+    vehicle_location = VehicleLocation.query.filter_by(vehicle_id=vehicle_id).first()
+    vehicle_condition = VehicleCondition.query.filter_by(vehicle_id=vehicle_id).first()
+    
     # Get related vehicles (same category, different vehicle)
     related_vehicles = []
     if vehicle_categories:
@@ -132,7 +138,9 @@ def detail(vehicle_id):
                          images=images,
                          image_objects=image_objects,  # Keep original objects for template display
                          categories=vehicle_categories,
-                         related_vehicles=related_vehicles)
+                         related_vehicles=related_vehicles,
+                         vehicle_location=vehicle_location,
+                         vehicle_condition=vehicle_condition)
 
 @vehicles_bp.route('/search')
 def search():

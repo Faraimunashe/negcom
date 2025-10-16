@@ -12,6 +12,12 @@
             <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
             <p class="text-gray-600">Manage user accounts and permissions</p>
         </div>
+        <a href="{{ url_for('admin.create_user') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add New User
+        </a>
     </div>
 
     <!-- User Statistics -->
@@ -212,16 +218,15 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                {% if user.is_active %}bg-green-100 text-green-800
-                                {% else %}bg-red-100 text-red-800{% endif %}">
-                                {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                Active
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.created_at.strftime('%b %d, %Y') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-end space-x-2">
                                 <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="text-blue-600 hover:text-blue-900">View</a>
+                                <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="text-green-600 hover:text-green-900">Edit</a>
                                 {% if user.id != current_user.id %}
                                     <button onclick="confirmDelete({{ user.id }}, '{{ user.name }}')" class="text-red-600 hover:text-red-900">Delete</button>
                                 {% endif %}
